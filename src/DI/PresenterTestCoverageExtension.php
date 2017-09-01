@@ -2,7 +2,8 @@
 
 namespace ADT\PresenterTestCoverage\DI;
 
-use ADT\PresenterTestCoverage\Console\PresenterTestCoverageCommand;
+use ADT\PresenterTestCoverage\Console\CheckUrlCommand;
+use ADT\PresenterTestCoverage\Service;
 
 class PresenterTestCoverageExtension extends \Nette\DI\CompilerExtension {
 
@@ -10,16 +11,20 @@ class PresenterTestCoverageExtension extends \Nette\DI\CompilerExtension {
 		$builder = $this->getContainerBuilder();
 		$config = $this->validateConfig([
 			"appNamespacePrefix" => "App",
-			"testNamespacePrefix" => "Tests",
-			"testClassSuffix" => "Test",
-			"testMethodPrefix" => "test",
+			"crawlerNamespacePrefix" => "Url",
 		]);
 
+		// command pro kontrolu URL tříd
 		$builder->addDefinition($this->prefix('command'))
-			->setClass(PresenterTestCoverageCommand::class)
+			->setClass(CheckUrlCommand::class)
 			->addSetup("setConfig", [$config])
 			->setInject(FALSE)
 			->addTag('kdyby.console.command');
+
+		$builder->addDefinition($this->prefix('service'))
+			->setClass(Service::class)
+			->addSetup("setConfig", [$config])
+			->setInject(FALSE);
 	}
 
 }
