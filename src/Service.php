@@ -4,6 +4,7 @@ namespace ADT\PresenterTestCoverage;
 
 
 use Nette\Application\IPresenter;
+use Nette\Application\UI\PresenterComponentReflection;
 use Nette\DI\Container;
 use Nette\Utils\Strings;
 
@@ -53,14 +54,7 @@ class Service {
 	 * @return array
 	 */
 	public function getFoundMethods() {
-		$methods = [];
-		foreach ($this->getPresenterMethods() as $method) {
-			if (self::isValidUrlClassAndMethod($method["class"], $method["method"])) {
-				$methods[] = $method["full"];
-			}
-		}
-
-		return $methods;
+		return $this->getMethods(TRUE);
 	}
 
 	/**
@@ -69,20 +63,14 @@ class Service {
 	 * @return array
 	 */
 	public function getMissingMethods() {
-		$methods = [];
-		foreach ($this->getPresenterMethods() as $method) {
-			if (!self::isValidUrlClassAndMethod($method["class"], $method["method"])) {
-				$methods[] = $method["full"];
-			}
-		}
-
-		return $methods;
+		return $this->getMethods(FALSE);
 	}
 
 	/**
+	 * @param bool $foundMethods
 	 * @return array
 	 */
-	protected function getPresenterMethods() : array {
+	protected function getMethods($foundMethods = TRUE) : array {
 		$presenters = $this->container->findByType(IPresenter::class);
 
 		$methods = [];
@@ -98,7 +86,7 @@ class Service {
 			$reflectionMethods = array_filter($presenterReflection->getMethods(), function (\Nette\Reflection\Method $methodReflection) {
 
 				if (!$this->isTestedClass($methodReflection->class) || !$methodReflection->isPublic()) {
-					return NULL;
+					return FALSE;
 				}
 
 				return self::isTestedMethod($methodReflection->getName());
@@ -106,7 +94,11 @@ class Service {
 
 			foreach ($reflectionMethods as $reflectionMenthod) {
 				$params = self::parseClassesMethods($reflectionMenthod);
-				$methods[$params["original"]] = $params;
+				$methodExist = self::isValidUrlClassAndMethod($params["class"], $params["method"]);
+
+				if ($foundMethods && $methodExist || !$foundMethods && !$methodExist) {
+					$methods[$params["original"]] = $params["full"];
+				}
 			}
 		}
 
@@ -127,10 +119,10 @@ class Service {
 	 */
 	protected static function isTestedMethod(string $methodName) : bool {
 		foreach ([
-					 "action",
-					 "render",
-					 "handle",
-				 ] as $methodPrefix) {
+			"action",
+			"render",
+			"handle",
+		] as $methodPrefix) {
 			if (Strings::startsWith($methodName, $methodPrefix)) {
 				return TRUE;
 			}
@@ -140,6 +132,17 @@ class Service {
 	}
 
 	/**
+	 * Vrací:
+	 * [
+	 * 	[
+	 * 		"original" => "App\StoreModule\Presenters\OrderPresenter::actionDefault",
+	 * 		"class" => "Url\StoreModule\Presenters\OrderPresenter",
+	 * 		"method" => "actionDefault",
+	 * 		"full" => "Url\StoreModule\Presenters\OrderPresenter::actionDefault",
+	 * 	],
+	 *	...
+	 * ]
+	 *
 	 * @param \Nette\Reflection\Method $methodReflection
 	 * @return array
 	 */
@@ -168,8 +171,10 @@ class Service {
 			return FALSE;
 		}
 
-		// metoda nevrací neprázdné pole
 		$class = new $class;
-		return (bool) $class->$method();
+		$urls = $class->$method();
+
+		// metoda musí vracet neprázdné pole
+		return $urls && is_array($urls);
 	}
 }
