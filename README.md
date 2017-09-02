@@ -18,9 +18,7 @@ extensions:
 # app/config/config.neon
 presenterTestCoverage:
     appNamespacePrefix: App
-    testNamespacePrefix: Tests
-    testClassSuffix: Test
-    testMethodPrefix: test
+    crawlerNamespacePrefix: Url
 ```
 
 
