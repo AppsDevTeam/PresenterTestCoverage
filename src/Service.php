@@ -41,7 +41,7 @@ class Service {
 			$params = explode("::", $method);
 
 			$class = new $params[0];
-			$urls += $class->$params[1]();
+			$urls = array_merge($urls, $class->{$params[1]}());
 		}
 
 		return $urls;
