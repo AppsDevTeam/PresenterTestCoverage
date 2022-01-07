@@ -4,8 +4,8 @@ namespace ADT\PresenterTestCoverage;
 
 
 use Nette\Application\IPresenter;
-use Nette\Application\UI\PresenterComponentReflection;
 use Nette\DI\Container;
+use Nette\Utils\Reflection;
 use Nette\Utils\Strings;
 
 class Service {
@@ -75,25 +75,19 @@ class Service {
 
 		$methods = [];
 		foreach ($presenters as $serviceNumber) {
+			$className = get_class($this->container->getService($serviceNumber));
 
-			/** @var PresenterComponentReflection $reflection */
-			$presenterReflection = $this->container->getService($serviceNumber)->reflection;
-
-			if (!$this->isTestedClass($presenterReflection->getName())) {
+			if (!$this->isTestedClass($className)) {
 				continue;
 			}
 
-			$reflectionMethods = array_filter($presenterReflection->getMethods(), function (\Nette\Reflection\Method $methodReflection) {
-
-				if (!$this->isTestedClass($methodReflection->class) || !$methodReflection->isPublic()) {
-					return FALSE;
-				}
-
-				return self::isTestedMethod($methodReflection->getName());
+			$classMethods = get_class_methods($this->container->getService($serviceNumber));
+			$classMethods = array_filter($classMethods, function ($methodName) {
+				return self::isTestedMethod($methodName);
 			});
 
-			foreach ($reflectionMethods as $reflectionMenthod) {
-				$params = self::parseClassesMethods($reflectionMenthod);
+			foreach ($classMethods as $methodName) {
+				$params = self::parseClassesMethods($className, $methodName);
 				$methodExist = self::isValidUrlClassAndMethod($params["class"], $params["method"]);
 
 				if ($foundMethods && $methodExist || !$foundMethods && !$methodExist) {
@@ -143,16 +137,17 @@ class Service {
 	 *	...
 	 * ]
 	 *
-	 * @param \Nette\Reflection\Method $methodReflection
+	 * @param string $className
+	 * @param string $methodName
 	 * @return array
 	 */
-	protected function parseClassesMethods(\Nette\Reflection\Method $methodReflection) : array {
+	protected function parseClassesMethods($className, $methodName) : array {
 		$params = [];
 
-		$params["original"] = $methodReflection->class . "::" . $methodReflection->getName();
+		$params["original"] = $className . "::" . $methodName;
 
-		$params["class"] = str_replace($this->config["appNamespacePrefix"] . "\\", $this->config["crawlerNamespacePrefix"] . "\\", $methodReflection->class);
-		$params["method"] = $methodReflection->getName();
+		$params["class"] = str_replace($this->config["appNamespacePrefix"] . "\\", $this->config["crawlerNamespacePrefix"] . "\\", $className);
+		$params["method"] = $methodName;
 
 		$params["full"] = $params["class"] . "::" . $params["method"];
 

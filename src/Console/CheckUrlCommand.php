@@ -47,6 +47,10 @@ class CheckUrlCommand extends Command {
 	 * @param OutputInterface $output
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
+		$loader = new \Nette\Loaders\RobotLoader;
+		$loader->addDirectory($this->config["testDir"]);
+		$loader->setTempDirectory($this->config["tempDir"]);
+		$loader->register();
 
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");

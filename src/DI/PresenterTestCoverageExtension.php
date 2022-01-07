@@ -12,19 +12,19 @@ class PresenterTestCoverageExtension extends \Nette\DI\CompilerExtension {
 		$config = $this->validateConfig([
 			"appNamespacePrefix" => "App",
 			"crawlerNamespacePrefix" => "Url",
+			"testDir" => NULL,
+			"tempDir" => NULL,
 		]);
 
 		// command pro kontrolu URL tříd
 		$builder->addDefinition($this->prefix('command'))
 			->setClass(CheckUrlCommand::class)
 			->addSetup("setConfig", [$config])
-			->setInject(FALSE)
 			->addTag('kdyby.console.command');
 
 		$builder->addDefinition($this->prefix('service'))
 			->setClass(Service::class)
-			->addSetup("setConfig", [$config])
-			->setInject(FALSE);
+			->addSetup("setConfig", [$config]);
 	}
 
 }

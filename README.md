@@ -3,7 +3,7 @@
 ## 1 Instalace do aplikace
 composer:
 ```
-composer adt/presenter-test-coverage
+composer require adt/presenter-test-coverage
 ```
 
 ### 1.1 Registrace extension
@@ -19,6 +19,8 @@ extensions:
 presenterTestCoverage:
     appNamespacePrefix: App
     crawlerNamespacePrefix: Url
+    testDir: %appDir%/../../tests/url
+    tempDir: %tempDir%
 ```
 
 
