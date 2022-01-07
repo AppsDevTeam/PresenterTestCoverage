@@ -11,7 +11,7 @@
 		}
 	],
 	"require": {
-		"nette/nette": "^2.3.0"
+		"nette/nette": "^3.0"
 	},
 	"autoload": {
 		"psr-4": { "ADT\\PresenterTestCoverage\\": "src/" }
