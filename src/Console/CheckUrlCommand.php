@@ -3,67 +3,49 @@
 namespace ADT\PresenterTestCoverage\Console;
 
 use ADT\PresenterTestCoverage\Service;
+use Nette\DI\Container;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class CheckUrlCommand extends Command {
+class CheckUrlCommand extends Command
+{
+	protected array $config = [];
+	protected Container $container;
+	protected Service $service;
 
-	/** @var array */
-	protected $config = [];
-
-	/** \Nette\DI\Container */
-	protected $container;
-
-	/** @var Service */
-	protected $service;
-
-	/**
-	 * @param array $config
-	 */
-	public function setConfig(array $config = []) {
+	public function setConfig(array $config = []): void
+	{
 		$this->config = $config;
 	}
 
-	protected function configure() {
+	protected function configure(): void
+	{
 		$this->setName('adt:presenterTestCoverage');
 		$this->setDescription('Najde všechny presentery a testy na presentery. Vypíše, které metody (action, render a handle) jsou otestované a které ne.');
 	}
 
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 */
-	protected function initialize(InputInterface $input, OutputInterface $output) {
+	protected function initialize(InputInterface $input, OutputInterface $output): void
+	{
 		$output->getFormatter()->setStyle('danger', new OutputFormatterStyle('red'));
 
-		$this->container = $this->getHelper("container")->getByType('Nette\DI\Container');
+		$this->container = $this->getHelper("container")->getByType(Container::class);
 		$this->service = $this->container->getByType(Service::class);
 	}
 
-	/**
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
-	 */
-	protected function execute(InputInterface $input, OutputInterface $output) {
-		$loader = new \Nette\Loaders\RobotLoader;
-		$loader->addDirectory($this->config["testDir"]);
-		$loader->setTempDirectory($this->config["tempDir"]);
-		$loader->register();
-
+	protected function execute(InputInterface $input, OutputInterface $output): void
+	{
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");
-		foreach ($this->service->getFoundMethods() as $class) {
-			$output->writeln("<info>" . $class . "</info>");
+		foreach ($this->service->getFoundMethods() as $_missingMethod) {
+			$output->writeln("<info>" . $_missingMethod . "</info>");
 		}
 
 		$output->writeln("----------");
 		$output->writeln("Chybějící testy: ");
-		foreach ($this->service->getMissingMethods() as $class) {
-			$output->writeln("<danger>" . $class . "</danger>" );
+		foreach ($this->service->getMissingMethods() as $_missingMethod) {
+			$output->writeln("<danger>" . $_missingMethod . "</danger>" );
 		}
 	}
-
-
 }
