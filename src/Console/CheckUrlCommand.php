@@ -3,7 +3,6 @@
 namespace ADT\PresenterTestCoverage\Console;
 
 use ADT\PresenterTestCoverage\Service;
-use Nette\DI\Container;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,7 +11,6 @@ use Symfony\Component\Console\Output\OutputInterface;
 class CheckUrlCommand extends Command
 {
 	protected array $config = [];
-	protected Container $container;
 	protected Service $service;
 
 	public function setConfig(array $config = []): void
@@ -30,8 +28,7 @@ class CheckUrlCommand extends Command
 	{
 		$output->getFormatter()->setStyle('danger', new OutputFormatterStyle('red'));
 
-		$this->container = $this->getHelper("container")->getByType(Container::class);
-		$this->service = $this->container->getByType(Service::class);
+		$this->service = $this->getHelper("container")->getByType(Service::class);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output): void
