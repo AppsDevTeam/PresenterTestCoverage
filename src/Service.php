@@ -2,44 +2,39 @@
 
 namespace ADT\PresenterTestCoverage;
 
-
 use Nette\Application\IPresenter;
-use Nette\DI\Container;
-use Nette\Utils\Reflection;
+use Nette\Loaders\RobotLoader;
 use Nette\Utils\Strings;
 
-class Service {
+class Service
+{
+	protected static array $testMethodPrefixes = ['action', 'render'];
 
-	protected $container;
+	protected array $config = [];
+	protected ?RobotLoader $robotLoader = null;
 
-	/**
-	 * @param \Nette\DI\Container $container
-	 */
-	public function __construct(Container $container)
+	public function setConfig(array $config = []): self
 	{
-		$this->container = $container;
-	}
-
-	/** @var array */
-	protected $config = [];
-
-	/**
-	 * @param array $config
-	 */
-	public function setConfig(array $config = []) {
 		$this->config = $config;
+		return $this;
 	}
 
-	/**
-	 * Vrátí pole URL adres z jednotlivých testů
-	 *
-	 * @return array
-	 */
-	public function getUrls() {
+	public function getFoundMethods(): array
+	{
+		return $this->getMethods(true);
+	}
+
+	public function getMissingMethods(): array
+	{
+		return $this->getMethods(false);
+	}
+
+	public function getUrls(): array
+	{
 		$urls = [];
 
 		foreach ($this->getFoundMethods() as $method) {
-			$params = explode("::", $method);
+			$params = explode('::', $method);
 
 			$class = new $params[0];
 			$urls = array_merge($urls, $class->{$params[1]}());
@@ -48,50 +43,34 @@ class Service {
 		return $urls;
 	}
 
-	/**
-	 * Vrátí pole Class::method nalezených tříd s URL
-	 *
-	 * @return array
-	 */
-	public function getFoundMethods() {
-		return $this->getMethods(TRUE);
-	}
-
-	/**
-	 * Vrátí pole Class::method nenalezených tříd s URL
-	 *
-	 * @return array
-	 */
-	public function getMissingMethods() {
-		return $this->getMethods(FALSE);
-	}
-
-	/**
-	 * @param bool $foundMethods
-	 * @return array
-	 */
-	protected function getMethods($foundMethods = TRUE) : array {
-		$presenters = $this->container->findByType(IPresenter::class);
-
+	protected function getMethods(bool $foundMethods = true) : array
+	{
 		$methods = [];
-		foreach ($presenters as $serviceNumber) {
-			$className = get_class($this->container->getService($serviceNumber));
 
-			if (!$this->isTestedClass($className)) {
+		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
+			if (! Strings::startsWith($_classFile, $this->config['presenterDir'] . '/')) {
 				continue;
 			}
 
-			$classMethods = get_class_methods($this->container->getService($serviceNumber));
-			$classMethods = array_filter($classMethods, function ($methodName) {
-				return self::isTestedMethod($methodName);
-			});
+			if (! Strings::endsWith($_classFile, 'Presenter.php')) {
+				continue;
+			}
 
-			foreach ($classMethods as $methodName) {
-				$params = self::parseClassesMethods($className, $methodName);
-				$methodExist = self::isValidUrlClassAndMethod($params["class"], $params["method"]);
+			require_once $_classFile;
 
-				if ($foundMethods && $methodExist || !$foundMethods && !$methodExist) {
-					$methods[$params["original"]] = $params["full"];
+			$_presenterReflection = new \ReflectionClass($_className);
+
+			foreach ($_presenterReflection->getMethods() as $_presenterMethodReflection) {
+				if (! static::isMethodToTest($_presenterMethodReflection->getName())) {
+					continue;
+				}
+
+				list($testClass, $testMethod) = $this->getTestClassAndMethod($_presenterReflection->getName(), $_presenterMethodReflection->getName());
+
+				$isMethodCovered = $this->isMethodCovered($testClass, $testMethod);
+
+				if ($foundMethods && $isMethodCovered || !$foundMethods && !$isMethodCovered) {
+					$methods[$testClass . '::' . $testMethod] = $testClass . '::' . $testMethod;
 				}
 			}
 		}
@@ -99,77 +78,57 @@ class Service {
 		return $methods;
 	}
 
-	/**
-	 * @param string $fullClassName
-	 * @return bool
-	 */
-	protected function isTestedClass(string $fullClassName) : bool {
-		return Strings::startsWith($fullClassName, $this->config["appNamespacePrefix"] . "\\");
-	}
-
-	/**
-	 * @param string $methodName
-	 * @return bool
-	 */
-	protected static function isTestedMethod(string $methodName) : bool {
-		foreach ([
-			"action",
-			"render",
-			"handle",
-		] as $methodPrefix) {
+	protected static function isMethodToTest(string $methodName) : bool
+	{
+		foreach (static::$testMethodPrefixes as $methodPrefix) {
 			if (Strings::startsWith($methodName, $methodPrefix)) {
-				return TRUE;
+				return true;
 			}
 		}
 
-		return FALSE;
+		return false;
 	}
 
-	/**
-	 * Vrací:
-	 * [
-	 * 	[
-	 * 		"original" => "App\StoreModule\Presenters\OrderPresenter::actionDefault",
-	 * 		"class" => "Url\StoreModule\Presenters\OrderPresenter",
-	 * 		"method" => "actionDefault",
-	 * 		"full" => "Url\StoreModule\Presenters\OrderPresenter::actionDefault",
-	 * 	],
-	 *	...
-	 * ]
-	 *
-	 * @param string $className
-	 * @param string $methodName
-	 * @return array
-	 */
-	protected function parseClassesMethods($className, $methodName) : array {
-		$params = [];
-
-		$params["original"] = $className . "::" . $methodName;
-
-		$params["class"] = str_replace($this->config["appNamespacePrefix"] . "\\", $this->config["crawlerNamespacePrefix"] . "\\", $className);
-		$params["method"] = $methodName;
-
-		$params["full"] = $params["class"] . "::" . $params["method"];
-
-		return $params;
+	protected function getTestClassAndMethod(string $presenterClass, string $presenterMethod): array
+	{
+		return [
+			str_replace(
+				$this->config["appNamespacePrefix"] . '\\',
+				$this->config['crawlerNamespacePrefix'] . '\\',
+				$presenterClass
+			),
+			str_replace(
+				static::$testMethodPrefixes,
+				'test',
+				$presenterMethod
+			)
+		];
 	}
 
-	/**
-	 * @param string $class
-	 * @param string $method
-	 * @return bool
-	 */
-	protected static function isValidUrlClassAndMethod(string $class, string $method) : bool {
+	protected function isMethodCovered(string $testClass, string $testMethod) : bool
+	{
+		require_once $this->getRobotLoader()->getIndexedClasses()[$testClass];
 
 		// neexistuje třída nebo metoda
-		if (!method_exists($class, $method)) {
+		if (!method_exists($testClass, $testMethod)) {
 			return FALSE;
 		}
 
-		$class = new $class;
-		$urls = $class->$method();
+		$urls = (new $testClass)->$testMethod();
 
 		// metoda musí vracet neprázdné pole
 		return $urls && is_array($urls);
+	}
+
+	protected function getRobotLoader(): RobotLoader
+	{
+		if (!$this->robotLoader) {
+			$this->robotLoader = (new RobotLoader)
+				->addDirectory($this->config['testDir'])
+				->addDirectory($this->config['presenterDir'])
+				->setTempDirectory($this->config['tempDir']);
+		}
+
+		return $this->robotLoader;
 	}
 }
