@@ -6,12 +6,14 @@
 	"license": ["MIT"],
 	"authors": [
 		{
-			"name": "Apps Dev Team s.r.o.",
-			"homepage": "http://appsdevteam.com"
+			"name": "Apps Dev Team",
+			"homepage": "https://www.appsdevteam.com"
 		}
 	],
 	"require": {
-		"nette/nette": "^3.0"
+		"nette/robot-loader": "^3.0",
+		"nette/utils": "^3.0",
+		"symfony/console": "^3.0 || ^4.0 || ^5.0 || ^6.0"
 	},
 	"autoload": {
 		"psr-4": { "ADT\\PresenterTestCoverage\\": "src/" }
