@@ -51,8 +51,7 @@ class Service
 			}
 			
 			list($class, $method) = explode('::', $method);
-
-			$class = new $class;
+			
 			$urls = array_merge($urls, (new $class)->$method());
 		}
 
