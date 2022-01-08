@@ -20,32 +20,48 @@ class Service
 
 	public function getFoundMethods(): array
 	{
-		return $this->getMethods(true);
+		$methods = [];
+		foreach ($this->getMethods() as $_method) {
+			if ($this->isMethodCovered($_method)) {
+				$methods[$_method] = $_method;
+			}
+		}
+
+		return $methods;
 	}
 
 	public function getMissingMethods(): array
 	{
-		return $this->getMethods(false);
+		$methods = [];
+		foreach ($this->getMethods() as $_method) {
+			if (! $this->isMethodCovered($_method)) {
+				$methods[$_method] = $_method;
+			}
+		}
+
+		return $methods;
 	}
 
-	public function getUrls(): array
+	public function getUrls(?string $prefix = null): array
 	{
 		$urls = [];
-
 		foreach ($this->getFoundMethods() as $method) {
-			$params = explode('::', $method);
+			if ($prefix && !Strings::startsWith($method, $prefix)) {
+				continue;
+			}
+			
+			list($class, $method) = explode('::', $method);
 
-			$class = new $params[0];
-			$urls = array_merge($urls, $class->{$params[1]}());
+			$class = new $class;
+			$urls = array_merge($urls, (new $class)->$method());
 		}
 
 		return $urls;
 	}
 
-	protected function getMethods(bool $foundMethods = true) : array
+	protected function getMethods() : array
 	{
 		$methods = [];
-
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 			if (! Strings::startsWith($_classFile, $this->config['presenterDir'] . '/')) {
 				continue;
@@ -64,13 +80,7 @@ class Service
 					continue;
 				}
 
-				list($testClass, $testMethod) = $this->getTestClassAndMethod($_presenterReflection->getName(), $_presenterMethodReflection->getName());
-
-				$isMethodCovered = $this->isMethodCovered($testClass, $testMethod);
-
-				if ($foundMethods && $isMethodCovered || !$foundMethods && !$isMethodCovered) {
-					$methods[$testClass . '::' . $testMethod] = $testClass . '::' . $testMethod;
-				}
+				$methods[] = $this->getTestClassAndMethod($_presenterReflection->getName(), $_presenterMethodReflection->getName());
 			}
 		}
 
@@ -88,29 +98,35 @@ class Service
 		return false;
 	}
 
-	protected function getTestClassAndMethod(string $presenterClass, string $presenterMethod): array
+	protected function getTestClassAndMethod(string $presenterClass, string $presenterMethod): string
 	{
-		return [
+		return
 			str_replace(
 				$this->config["appNamespacePrefix"] . '\\',
 				$this->config['crawlerNamespacePrefix'] . '\\',
 				$presenterClass
-			),
+			)
+			. '::' .
 			str_replace(
 				static::$testMethodPrefixes,
 				'test',
 				$presenterMethod
-			)
-		];
+			);
 	}
 
-	protected function isMethodCovered(string $testClass, string $testMethod) : bool
+	protected function isMethodCovered(string $testMethod) : bool
 	{
+		list($testClass, $testMethod) = explode('::', $testMethod);
+
+		if (!isset($this->getRobotLoader()->getIndexedClasses()[$testClass])) {
+			return false;
+		}
+
 		require_once $this->getRobotLoader()->getIndexedClasses()[$testClass];
 
 		// neexistuje třída nebo metoda
 		if (!method_exists($testClass, $testMethod)) {
-			return FALSE;
+			return false;
 		}
 
 		$urls = (new $testClass)->$testMethod();
