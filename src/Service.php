@@ -2,7 +2,6 @@
 
 namespace ADT\PresenterTestCoverage;
 
-use Nette\Application\IPresenter;
 use Nette\Loaders\RobotLoader;
 use Nette\Utils\Strings;
 
