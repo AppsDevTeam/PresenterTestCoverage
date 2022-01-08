@@ -19,14 +19,15 @@ extensions:
 presenterTestCoverage:
     appNamespacePrefix: App
     crawlerNamespacePrefix: Url
-    testDir: %appDir%/../../tests/url
+    presenterDir: %appDir%/Modules
     tempDir: %tempDir%
+    testDir: %appDir%/../../tests/url
 ```
 
 
 ### 2.1 Spuštění commandu
 ```
-$ php www/index.php env:test adt:presenterTestCoverage
+$ php www/index.php --env local adt:presenterTestCoverage
 ```
 
 
