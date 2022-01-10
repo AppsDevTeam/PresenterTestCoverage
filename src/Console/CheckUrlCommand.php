@@ -33,6 +33,8 @@ class CheckUrlCommand extends Command
 
 	protected function execute(InputInterface $input, OutputInterface $output): void
 	{
+		$this->service->getRobotLoader()->rebuild();
+
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");
 		foreach ($this->service->getFoundMethods() as $_missingMethod) {
