@@ -134,7 +134,7 @@ class Service
 		return $urls && is_array($urls);
 	}
 
-	protected function getRobotLoader(): RobotLoader
+	public function getRobotLoader(): RobotLoader
 	{
 		if (!$this->robotLoader) {
 			$this->robotLoader = (new RobotLoader)
