@@ -37,7 +37,7 @@ class DiaryPresenter extends BasePresenter
 
 	public function renderNew()
 	{
-	    // some code
+		// some code
 	}
 }
 ```
