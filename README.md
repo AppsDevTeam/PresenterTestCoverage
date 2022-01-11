@@ -18,16 +18,49 @@ extensions:
 # app/config/config.neon
 presenterTestCoverage:
     appNamespacePrefix: App
-    crawlerNamespacePrefix: Url
+    crawlerNamespacePrefix: Crawler
     presenterDir: %appDir%/Modules
     tempDir: %tempDir%
-    testDir: %appDir%/../../tests/url
+    testDir: %appDir%/../tests/Crawler
 ```
 
+### 1.3 Příklad testované třídy
+```
+namespace App\Modules\ClientModule\Diary;
+
+class DiaryPresenter extends BasePresenter
+{
+	public function actionNew()
+	{
+		// some code
+	}
+
+	public function renderNew()
+	{
+	    // some code
+	}
+}
+```
+
+### 1.4 Příklad testovací třídy
+```
+namespace Crawler\Modules\ClientModule\Diary;
+
+
+class DiaryPresenter
+{
+	public function testNew()
+	{
+		return [
+			'/diary/new'
+		];
+	}
+}
+```
 
 ### 2.1 Spuštění commandu
 ```
-$ php www/index.php --env local adt:presenterTestCoverage
+$ php www/index.php adt:presenterTestCoverage
 ```
 
 
