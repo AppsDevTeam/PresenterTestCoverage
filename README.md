@@ -46,7 +46,6 @@ class DiaryPresenter extends BasePresenter
 ```
 namespace Crawler\Modules\ClientModule\Diary;
 
-
 class DiaryPresenter
 {
 	public function testNew()
