@@ -7,7 +7,7 @@ use Nette\Utils\Strings;
 
 class Service
 {
-	protected static array $testMethodPrefixes = ['action', 'render'];
+	protected static string $testMethodPrefix = 'action';
 
 	protected array $config = [];
 	protected ?RobotLoader $robotLoader = null;
@@ -88,10 +88,8 @@ class Service
 
 	protected static function isMethodToTest(string $methodName) : bool
 	{
-		foreach (static::$testMethodPrefixes as $methodPrefix) {
-			if (Strings::startsWith($methodName, $methodPrefix)) {
-				return true;
-			}
+		if (Strings::startsWith($methodName, static::$testMethodPrefix)) {
+			return true;
 		}
 
 		return false;
@@ -105,12 +103,7 @@ class Service
 				$this->config['crawlerNamespacePrefix'] . '\\',
 				$presenterClass
 			)
-			. '::' .
-			str_replace(
-				static::$testMethodPrefixes,
-				'test',
-				$presenterMethod
-			);
+			. '::' . $presenterMethod;
 	}
 
 	protected function isMethodCovered(string $testMethod) : bool
