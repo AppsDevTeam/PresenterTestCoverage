@@ -34,11 +34,6 @@ class DiaryPresenter extends BasePresenter
 	{
 		// some code
 	}
-
-	public function renderNew()
-	{
-		// some code
-	}
 }
 ```
 
@@ -48,7 +43,7 @@ namespace Crawler\Modules\ClientModule\Diary;
 
 class DiaryPresenter
 {
-	public function testNew()
+	public function actionNew()
 	{
 		return [
 			'/diary/new'
@@ -57,9 +52,24 @@ class DiaryPresenter
 }
 ```
 
-### 2.1 Spuštění commandu
+### 2 Spuštění commandu
 ```
 $ php www/index.php adt:presenterTestCoverage
+```
+
+### 3 Příklad crawleru
+```
+public function crawlerTest(AcceptanceTester $I)
+{
+	/** @var ADT\PresenterTestCoverage\Service $presenterCoverageService */
+	$presenterCoverageService = $this->getService(ADT\PresenterTestCoverage\Service::class);
+	foreach ($presenterCoverageService->getUrls('Crawler\Modules\SystemModule') as $link) {
+		$I->amOnPage($link);
+		$I->dontSee('chyba 404');
+		$I->dontSee('chyba 500');
+		$I->dontSee('Nedostatečná práva');
+	}
+}
 ```
 
 
