@@ -12,6 +12,8 @@ class CheckUrlCommand extends Command
 {
 	protected array $config = [];
 	protected Service $service;
+	
+	protected static $defaultName = 'adt:presenterTestCoverage';
 
 	public function setConfig(array $config = []): void
 	{
