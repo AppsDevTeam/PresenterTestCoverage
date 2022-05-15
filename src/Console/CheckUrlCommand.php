@@ -12,6 +12,15 @@ class CheckUrlCommand extends Command
 {
 	protected array $config = [];
 	protected Service $service;
+	
+	protected static $defaultName = 'adt:presenterTestCoverage';
+	
+	public function __construct(Service $service) {
+		parent::__construct();
+
+		$this->service = $service;
+	}
+	
 
 	public function setConfig(array $config = []): void
 	{
@@ -27,8 +36,6 @@ class CheckUrlCommand extends Command
 	protected function initialize(InputInterface $input, OutputInterface $output): void
 	{
 		$output->getFormatter()->setStyle('danger', new OutputFormatterStyle('red'));
-
-		$this->service = $this->getHelper("container")->getByType(Service::class);
 	}
 
 	protected function execute(InputInterface $input, OutputInterface $output): void
