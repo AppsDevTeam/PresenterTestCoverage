@@ -22,6 +22,7 @@ presenterTestCoverage:
     presenterDir: %appDir%/Modules
     tempDir: %tempDir%
     testDir: %appDir%/../tests/Crawler
+    em: @App\Model\Doctrine\EntityManager
 ```
 
 ### 1.3 Příklad testované třídy

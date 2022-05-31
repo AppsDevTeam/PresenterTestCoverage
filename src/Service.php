@@ -2,6 +2,7 @@
 
 namespace ADT\PresenterTestCoverage;
 
+use Doctrine\ORM\EntityManagerInterface;
 use Nette\Loaders\RobotLoader;
 use Nette\Utils\Strings;
 
@@ -11,12 +12,16 @@ class Service
 
 	protected array $config = [];
 	protected ?RobotLoader $robotLoader = null;
+	protected static ?EntityManagerInterface $em;
+
 
 	public function setConfig(array $config = []): self
 	{
 		$this->config = $config;
+		self::$em = $this->config['em'];
 		return $this;
 	}
+
 
 	public function getFoundMethods(): array
 	{
@@ -30,6 +35,7 @@ class Service
 		return $methods;
 	}
 
+
 	public function getMissingMethods(): array
 	{
 		$methods = [];
@@ -42,6 +48,7 @@ class Service
 		return $methods;
 	}
 
+
 	public function getUrls(?string $prefix = null): array
 	{
 		$urls = [];
@@ -49,14 +56,15 @@ class Service
 			if ($prefix && !Strings::startsWith($method, $prefix)) {
 				continue;
 			}
-			
+
 			list($class, $method) = explode('::', $method);
-			
+
 			$urls = array_merge($urls, (new $class)->$method());
 		}
 
 		return $urls;
 	}
+
 
 	protected function getMethods() : array
 	{
@@ -86,6 +94,7 @@ class Service
 		return $methods;
 	}
 
+
 	protected static function isMethodToTest(string $methodName) : bool
 	{
 		if (Strings::startsWith($methodName, static::$testMethodPrefix)) {
@@ -94,6 +103,7 @@ class Service
 
 		return false;
 	}
+
 
 	protected function getTestClassAndMethod(string $presenterClass, string $presenterMethod): string
 	{
@@ -105,6 +115,7 @@ class Service
 			)
 			. '::' . $presenterMethod;
 	}
+
 
 	protected function isMethodCovered(string $testMethod) : bool
 	{
@@ -127,6 +138,7 @@ class Service
 		return $urls && is_array($urls);
 	}
 
+
 	public function getRobotLoader(): RobotLoader
 	{
 		if (!$this->robotLoader) {
@@ -137,5 +149,11 @@ class Service
 		}
 
 		return $this->robotLoader;
+	}
+
+
+	public static function getEm(): ?EntityManagerInterface
+	{
+		return self::$em;
 	}
 }
