@@ -15,14 +15,22 @@ extensions:
 
 ### 1.2 Nastavení
 ```
-# app/config/config.neon
+# app/config/config.neon    
 presenterTestCoverage:
     appNamespacePrefix: App
     crawlerNamespacePrefix: Crawler
-    presenterDir: %appDir%/Modules
-    tempDir: %tempDir%
-    testDir: %appDir%/../tests/Crawler
+    tempDir: %appDir%/../temp
+    componentCoverage:    #vycet komponent pro ktere budou testy provadeny
+        grids:    #nazev testovane sekce -  REQUIRED
+            componentDir: %appDir%/Components/Grids    #slozka s implementacemi - REQUIRED
+            testDir:  %appDir%/../tests/Crawler    #slozka se soubory testu - REQIRED
+            fileMask: Grid.php    #soubory pro ktere se bude hledat implementace testu - OPTIONAL
+            methodMask: render    #druh metod pro ktere se budou hledat testy - OPTIONAL
 ```
+
+Pokud není při konfiguraci uvedena fileMask, je jako fileMask použit název sekce.
+
+Pokud není uvedena methodMask, jsou defaultně hledány metody action
 
 ### 1.3 Příklad testované třídy
 ```
@@ -55,6 +63,8 @@ class DiaryPresenter
 ### 2 Spuštění commandu
 ```
 $ php www/index.php adt:presenterTestCoverage
+
+$ php bin/console adt:presenterTestCoverage
 ```
 
 ### 3 Příklad crawleru

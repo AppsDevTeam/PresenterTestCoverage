@@ -12,15 +12,12 @@ class CheckUrlCommand extends Command
 {
 	protected array $config = [];
 	protected Service $service;
-	
 	protected static $defaultName = 'adt:presenterTestCoverage';
-	
 	public function __construct(Service $service) {
 		parent::__construct();
 
 		$this->service = $service;
 	}
-	
 
 	public function setConfig(array $config = []): void
 	{
@@ -38,7 +35,7 @@ class CheckUrlCommand extends Command
 		$output->getFormatter()->setStyle('danger', new OutputFormatterStyle('red'));
 	}
 
-	protected function execute(InputInterface $input, OutputInterface $output): void
+	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
 		$this->service->getRobotLoader()->rebuild();
 
@@ -53,5 +50,16 @@ class CheckUrlCommand extends Command
 		foreach ($this->service->getMissingMethods() as $_missingMethod) {
 			$output->writeln("<danger>" . $_missingMethod . "</danger>" );
 		}
+
+		$wrongConfig = $this->service->getSkippedForMissingConfiguration();
+		if(!empty($wrongConfig)){
+			$output->writeln("----------");
+			$output->writeln("Chyby v konfiguraci: ");
+			foreach ($wrongConfig as $misconfiguredSection) {
+				$output->writeln("<danger>" . $misconfiguredSection . "</danger>" );
+			}
+		}
+
+		return 1;
 	}
 }
