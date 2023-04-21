@@ -76,8 +76,7 @@ class Service
 		$methods = [];
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 
-			//je potreba udela kontrolu jestli se jedna o neco co ma byt pokryto testy
-
+			//kontrola jestli se jedna o neco co ma byt pokryto testy
 			$notFound = true;
 			$section = '';
 			foreach($this->coveredComponents as $key => $componentDir){
@@ -103,8 +102,6 @@ class Service
 				$mask = ucfirst($section).".php";
 			}
 
-			//do budoucna by byalo vhodne podporovat i regex
-
 			if (! Strings::endsWith($_classFile, $mask)) {
 				continue;
 			}
@@ -119,13 +116,11 @@ class Service
 				$methodMask = $this->config['componentCoverage'][$section]['methodMask'];
 			}
 
-			//tady se kontroluje jestli je dana metoda u trestovani.
 			foreach ($_presenterReflection->getMethods() as $_presenterMethodReflection) {
 
 				if (! static::isMethodToTest($_presenterMethodReflection->getName(), $methodMask)) {
 					continue;
 				}
-
 				$methods[] = $this->getTestClassAndMethod($_presenterReflection->getName(), $_presenterMethodReflection->getName());
 			}
 		}
@@ -179,7 +174,6 @@ class Service
 		// metoda musí vracet neprázdné pole
 		return $urls && is_array($urls);
 	}
-
 
 	public function getRobotLoader(): RobotLoader
 	{
