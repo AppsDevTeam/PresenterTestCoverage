@@ -70,35 +70,34 @@ class Service
 		return $urls;
 	}
 
-	//jenom ziskava metody podle daneho nazvu
 	protected function getMethods() : array
 	{
 		$methods = [];
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 
-			//kontrola jestli se jedna o neco co ma byt pokryto testy
+			// kontrola jestli se jedna o neco co ma byt pokryto testy
 			$notFound = true;
 			$section = '';
-			foreach($this->coveredComponents as $key => $componentDir){
-				//kontrola jestli dany soubor je soucasti souboru, ktere obsahuji implementaci pro kterou by mel existovat test.
+			foreach ($this->coveredComponents as $key => $componentDir) {
+				// kontrola jestli dany soubor je soucasti souboru, ktere obsahuji implementaci pro kterou by mel existovat test.
 				if (! Strings::startsWith($_classFile, $componentDir['dir'] . '/')) {
 					continue;
 				}
-				//naleyen, nastavime notFound na false a ukoncime iterovani
+				// nalezen, nastavime notFound na false a ukoncime iterovani
 				$notFound = false;
 				$section = $componentDir['section'];
 				break;
 			}
 
-			//pokud jsme dany soubor nenasli, budeme pokracovat dalsi iteraci
-			if($notFound) {
+			// pokud jsme dany soubor nenasli, budeme pokracovat dalsi iteraci
+			if ($notFound) {
 				continue;
 			}
 
-			if(isset($this->config['componentCoverage'][$section]['fileMask'])){
+			if (isset($this->config['componentCoverage'][$section]['fileMask'])) {
 				$mask = $this->config['componentCoverage'][$section]['fileMask'];
 			} else {
-				//defaultni maska souboru nazev sekce + php
+				// defaultni maska souboru nazev sekce + php
 				$mask = ucfirst($section).".php";
 			}
 
@@ -110,9 +109,9 @@ class Service
 
 			$_presenterReflection = new \ReflectionClass($_className);
 
-			//maska metody, chceme zpracovat jenom mentody ktere maji danou masku
+			// maska metody, chceme zpracovat jenom metody ktere maji danou masku
 			$methodMask = null;
-			if(isset($this->config['componentCoverage'][$section]['methodMask'])){
+			if (isset($this->config['componentCoverage'][$section]['methodMask'])) {
 				$methodMask = $this->config['componentCoverage'][$section]['methodMask'];
 			}
 
@@ -129,8 +128,8 @@ class Service
 
 	protected static function isMethodToTest(string $methodName, ?string $prefix = null) : bool
 	{
-		//muzeme menit prefix metody.
-		if(is_null($prefix)){
+		// muzeme menit prefix metody.
+		if (is_null($prefix)) {
 			$prefix = static::$testMethodPrefix;
 		}
 
@@ -181,23 +180,22 @@ class Service
 			$this->robotLoader = (new RobotLoader)
 				->setTempDirectory($this->config['tempDir']);
 
-			//iterace pres vsechny nakonfigurovane slozky
-			foreach($this->config['componentCoverage'] as $key => $dirSetup){
+			// iterace pres vsechny nakonfigurovane slozky
+			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
 
-				//kontrola ze pro danou slozku mame nakonfigurovany obe potrebne slozky. Pokud jednu nemame, tak skipneme, ale po dokonceni behu testu
-				//budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane.
+				// kontrola ze pro danou slozku mame nakonfigurovany obe potrebne slozky. Pokud jednu nemame, tak skipneme, ale po dokonceni behu testu
+				// budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane.
 				if(!array_key_exists('componentDir', $dirSetup) || !array_key_exists('testDir', $dirSetup)) {
 					//nemame bud componentu, nebo testy -> nelze zpracovat
 					$this->skippedForMissingConfiguration[] = $key;
 					continue;
 				}
 
-				//nastaveni ktere slozky se budou indexovat/
+				// nastaveni ktere slozky se budou indexovat/
 				$this->robotLoader->addDirectory($dirSetup['componentDir']);
 				$this->robotLoader->addDirectory($dirSetup['testDir']);
-				//nastavime si pro ktere vsechny slozky budeme pracovat
+				// nastavime si pro ktere vsechny slozky budeme pracovat
 				$this->coveredComponents[] = ["dir" => $dirSetup['componentDir'], "section" => $key];
-				//tu bude treba zpracovat jednotliva pole z testCoverage
 			}
 
 		}
@@ -205,7 +203,7 @@ class Service
 		return $this->robotLoader;
 	}
 
-	public function getSkippedForMissingConfiguration(){
+	public function getSkippedForMissingConfiguration() {
 		return $this->skippedForMissingConfiguration;
 	}
 }
