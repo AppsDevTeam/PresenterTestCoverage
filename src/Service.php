@@ -94,12 +94,7 @@ class Service
 				continue;
 			}
 
-			if (isset($this->config['componentCoverage'][$section]['fileMask'])) {
-				$mask = $this->config['componentCoverage'][$section]['fileMask'];
-			} else {
-				// defaultni maska souboru nazev sekce + php
-				$mask = ucfirst($section).".php";
-			}
+			$mask = $this->config['componentCoverage'][$section]['fileMask'];
 
 			if (! Strings::endsWith($_classFile, $mask)) {
 				continue;
@@ -126,12 +121,8 @@ class Service
 		return $methods;
 	}
 
-	protected static function isMethodToTest(string $methodName, ?string $prefix = null) : bool
+	protected static function isMethodToTest(string $methodName, string $prefix = null) : bool
 	{
-		// muzeme menit prefix metody.
-		if (is_null($prefix)) {
-			$prefix = static::$testMethodPrefix;
-		}
 
 		if (Strings::startsWith($methodName, $prefix)) {
 			return true;
@@ -185,7 +176,10 @@ class Service
 
 				// kontrola ze pro danou slozku mame nakonfigurovany obe potrebne slozky. Pokud jednu nemame, tak skipneme, ale po dokonceni behu testu
 				// budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane.
-				if(!array_key_exists('componentDir', $dirSetup) || !array_key_exists('testDir', $dirSetup)) {
+				if(!array_key_exists('componentDir', $dirSetup)
+					|| !array_key_exists('testDir', $dirSetup)
+					|| !array_key_exists('fileMask', $dirSetup)
+					|| !array_key_exists('methodMask', $dirSetup)) {
 					//nemame bud componentu, nebo testy -> nelze zpracovat
 					$this->skippedForMissingConfiguration[] = $key;
 					continue;

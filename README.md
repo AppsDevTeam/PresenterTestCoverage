@@ -24,8 +24,8 @@ presenterTestCoverage:
         grids:    #nazev testovane sekce -  REQUIRED
             componentDir: %appDir%/Components/Grids    #slozka s implementacemi - REQUIRED
             testDir:  %appDir%/../tests/Crawler    #slozka se soubory testu - REQIRED
-            fileMask: Grid.php    #soubory pro ktere se bude hledat implementace testu - OPTIONAL
-            methodMask: render    #druh metod pro ktere se budou hledat testy - OPTIONAL
+            fileMask: Grid.php    #soubory pro ktere se bude hledat implementace testu - REQIRED
+            methodMask: render    #druh metod pro ktere se budou hledat testy - REQIRED
 ```
 
 Pokud není při konfiguraci uvedena fileMask, je jako fileMask použit název sekce.
