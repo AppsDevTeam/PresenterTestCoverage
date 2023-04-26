@@ -104,7 +104,7 @@ class Service
 	 * @throws \ReflectionException
 	 */
 	public function checkCoverage() {
-
+		$cwd = getcwd().'/';
 		if (!empty($foundTests) || !empty($missingTests)) {
 			return;
 		}
@@ -119,9 +119,9 @@ class Service
 			}
 
 			if (array_key_exists($method, $this->existingTests)) {
-				$this->foundTests[] = $this->existingTests[$method];
+				$this->foundTests[] = str_replace($cwd, '', $this->existingTests[$method]);
 			} else {
-				$this->missingTests[] = $key;
+				$this->missingTests[] = str_replace($cwd, '', $key);
 			}
 		}
 	}
