@@ -56,8 +56,6 @@ class DiaryPresenter
 
 ### 2 Spuštění commandu
 ```
-$ php www/index.php adt:presenterTestCoverage
-
 $ php bin/console adt:presenterTestCoverage
 ```
 

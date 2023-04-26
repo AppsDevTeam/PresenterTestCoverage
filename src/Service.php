@@ -41,15 +41,9 @@ class Service
 	private $missingTests = [];
 
 	/**
-	 * @var array obsahuje vsechny metory, ktere maji byt pokryty testy
+	 * @var array obsahuje vsechny metody, ktere maji byt pokryty testy
 	 */
 	private $methodsToCover = [];
-
-	/**
-	 * @var ?string prefix pro namespace testu. Ma jenom informativni charakter pro uzivatele
-	 */
-	private $testNamespacePrefix = null;
-
 
 	/**
 	 * @param array $config
@@ -70,7 +64,7 @@ class Service
 		//pokud je pole prazdne, je sance ze se jeste nic nehledalo -> prohledame
 		if (empty($this->foundTests)) {
 			$this->findAvailableTests();
-			$this->cehckCoverage();
+			$this->checkCoverage();
 		}
 		return $this->foundTests;
 	}
@@ -82,10 +76,10 @@ class Service
 	 */
 	public function getMissingMethods(): array
 	{
-		//prazdne pole -> asi se nehledalo -> prohledame
+		//prazdne pole -> radeji prohledame
 		if (empty($this->missingTests)) {
 			$this->findAvailableTests();
-			$this->cehckCoverage();
+			$this->checkCoverage();
 		}
 		return $this->missingTests;
 	}
@@ -101,29 +95,25 @@ class Service
 		if (Strings::startsWith($methodName, $prefix)) {
 			return true;
 		}
-
 		return false;
 	}
 
 
 	/**
-	 * metoda kontroluje pokrzti metod testy.
+	 * metoda kontroluje pokryti metod testy.
 	 * @throws \ReflectionException
 	 */
-	public function cehckCoverage(){
+	public function checkCoverage() {
 
-		//uz se asi jednou poustelo, tedy neni treba to delat znovu
 		if (!empty($foundTests) || !empty($missingTests)) {
 			return;
 		}
 
 		$this->findMethodsToCover();
+		foreach ($this->methodsToCover as $key => $method) {
 
-		foreach ($this->methodsToCover as $method) {
-
-			//pozice prvniho backslashe
+			//ziskame cast namespace podle ktere porovnavame
 			$position = strpos($method, '\\');
-
 			if ($position) {
 				$method = substr($method, $position + 1);
 			}
@@ -131,7 +121,7 @@ class Service
 			if (array_key_exists($method, $this->existingTests)) {
 				$this->foundTests[] = $this->existingTests[$method];
 			} else {
-				$this->missingTests[] = $this->testNamespacePrefix .'\\'. $method;
+				$this->missingTests[] = $key;
 			}
 		}
 	}
@@ -149,13 +139,13 @@ class Service
 			// iterace pres vsechny nakonfigurovane slozky
 			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
 
-				// kontrola ze pro danou slozku mame nakonfigurovany obe potrebne slozky. Pokud jednu nemame, tak skipneme, ale po dokonceni behu testu
-				// budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane.
+				// kontrola ze mame nakonfigurovany vsechny potrebne udaje
+				// budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane
 				if(!array_key_exists('componentDir', $dirSetup)
 					|| !array_key_exists('fileMask', $dirSetup)
 					|| !array_key_exists('methodMask', $dirSetup)
 					|| !array_key_exists('testDir', $this->config)) {
-					//nemame bud componentu, nebo testy -> nelze zpracovat
+
 					$this->skippedForMissingConfiguration[] = $key;
 					continue;
 				}
@@ -163,10 +153,6 @@ class Service
 				// nastaveni ktere slozky se budou indexovat/
 				$this->robotLoader->addDirectory($dirSetup['componentDir']);
 				$this->robotLoader->addDirectory($this->config['testDir']);
-
-				if (!isset($this->testNamespacePrefix)) {
-					$this->guessTestNamespace($this->config['testDir'], $dirSetup['componentDir']);
-				}
 
 				// nastavime si pro ktere vsechny slozky budeme pracovat
 				$this->coveredComponents[] = ["dir" => $dirSetup['componentDir'], "section" => $key];
@@ -185,7 +171,7 @@ class Service
 
 
 	/**
-	 * Metoda vyhleda vsechny soubory podle zadane masky a vrati pole.
+	 * Metoda vyhleda vsechny soubory podle zadane masky a nastavi je do pole
 	 * @throws \ReflectionException
 	 */
 	protected function findMethodsToCover(): void {
@@ -225,7 +211,7 @@ class Service
 
 			$_presenterReflection = new \ReflectionClass($_className);
 
-			//nechceme zpracovavat abstratni tridy -> toz continue
+			// nechceme zpracovavat abstraktni tridy -> continue
 			if ($_presenterReflection->isAbstract()) {
 				continue;
 			}
@@ -237,7 +223,7 @@ class Service
 			}
 
 			foreach ($_presenterReflection->getMethods() as $_presenterMethodReflection) {
-				//testy na abstraktni metody nemaji smysl -> continue
+				// testy na abstraktni metody nemaji smysl -> continue
 				if ($_presenterMethodReflection->isAbstract()) {
 					continue;
 				}
@@ -246,8 +232,18 @@ class Service
 					continue;
 				}
 
-				//vytvareni soupisu metod, pro ktere budeme chtit hledat testy
-				$this->methodsToCover[] = $_presenterReflection->getName()."::".$_presenterMethodReflection->getName();
+				// potrebujeme ziskat cestu k souboru v mistni slozce, ta odpovida namespace -> smazeme to co je pred namespacem
+				$postionoOfNamespace = stripos($_presenterReflection->getFileName(), str_replace('\\', '/', $_presenterReflection->getName()));
+
+				//bude treba odstranit prvni element z namespace
+				$filePath = substr($_presenterReflection->getFileName(), $postionoOfNamespace);
+				$filePath = substr($filePath, (strpos( $filePath, '/') + 1));
+
+				//plna cesta k testovacimu souboru
+				$testFilePath = realpath($this->config['testDir']). '/' .$filePath."::".$_presenterMethodReflection->getName();
+
+				//vytvareni soupisu metod pro ktere budeme chtit hledat testy
+				$this->methodsToCover[$testFilePath] = $_presenterReflection->getName()."::".$_presenterMethodReflection->getName();
 			}
 		}
 	}
@@ -265,7 +261,7 @@ class Service
 
 			$crawlerBasePath = realpath($testDir) . '/';
 
-			//pokud nejsme v testovaci slozce, tak nas to nezajima
+			//pokud nejsme v testovaci slozce, soubor neni treba kontrolovat
 			if (! Strings::startsWith($_classFile, $crawlerBasePath)) {
 				continue;
 			}
@@ -277,13 +273,12 @@ class Service
 
 			$_crawlerReflection = new \ReflectionClass($_className);
 
-			//kontrola jestli je dana trida abstraktni ci nikoliv
 			if ($_crawlerReflection->isAbstract()) {
 				continue;
 			}
 
 			foreach ($_crawlerReflection->getMethods() as $_crawlerMethodReflection) {
-				//testy na abstraktni metody nemaji smysl -> continue
+
 				if ($_crawlerMethodReflection->isAbstract()) {
 					continue;
 				}
@@ -291,43 +286,8 @@ class Service
 				//konverze nazvu na "kratky namespace"
 				$shortNamespace = substr($classFileRootedPath, 0, strrpos($classFileRootedPath, '.'));
 
-				$this->existingTests[str_replace('/', '\\',$shortNamespace)."::".$_crawlerMethodReflection->getName()] = $_className."::".$_crawlerMethodReflection->getName();
-
+				$this->existingTests[str_replace('/', '\\',$shortNamespace)."::".$_crawlerMethodReflection->getName()] = $_classFile."::".$_crawlerMethodReflection->getName();
 			}
 		}
-	}
-
-
-	/**
-	 * Pkud metodu nenajdeme, je potreba o tomto faktu informovat uzivatele, potrebujeme mu tedy predat informaci o
-	 * namespace kve kterem by se metoda mela nachazet -> je potreba nejak uhodnout strukturu nad prvni urovni pod rootem
-	 * namespaceu
-	 * @param string $testDir
-	 * @param string $componentDir
-	 */
-	public function guessTestNamespace(string $testDir, string $componentDir): void {
-		if ($this->testNamespacePrefix) {
-			return;
-		}
-
-		$componentArr = explode('/', $componentDir);
-		$testArr = explode('/', $testDir);
-
-		$limit = (count($componentArr) < count($testArr)) ? count($componentArr) : count($testArr);
-
-		for ($i = 0; $i < $limit; $i++) {
-			if ($componentArr[$i] === $testArr[$i]) {
-				unset($testArr[$i]);
-				continue;
-			}
-		}
-
-		foreach ($testArr as $key => $value) {
-			if ($value === '..') {
-				unset($testArr[$key]);
-			}
-		}
-
-		$this->testNamespacePrefix = ucfirst(count($testArr) ? implode('\\', $testArr) : '');
 	}
 }
