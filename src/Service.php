@@ -112,7 +112,7 @@ class Service
 	 * metoda kontroluje pokryti metod testy.
 	 * @throws \ReflectionException
 	 */
-	public function checkCoverage() {
+	protected function checkCoverage() {
 		$cwd = getcwd().'/';
 		if (!empty($this->foundTests) || !empty($this->missingTests)) {
 			return;
