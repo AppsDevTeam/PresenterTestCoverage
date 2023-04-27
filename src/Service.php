@@ -69,7 +69,7 @@ class Service
 	{
 		//pokud je pole prazdne, je sance ze se jeste nic nehledalo -> prohledame
 		if (empty($this->foundTests)) {
-			$this->findAvailableTests();
+			$this->findExistingTests();
 			$this->checkCoverage();
 		}
 		return $this->foundTests;
@@ -84,7 +84,7 @@ class Service
 	{
 		//prazdne pole -> radeji prohledame
 		if (empty($this->missingTests)) {
-			$this->findAvailableTests();
+			$this->findExistingTests();
 			$this->checkCoverage();
 		}
 		return $this->missingTests;
@@ -283,7 +283,7 @@ class Service
 	/**
 	 * metoda najde vsechny dostupne testy, ktere mame a ulozi si je
 	 */
-	protected function findAvailableTests(): void {
+	protected function findExistingTests(): void {
 
 		// pokud se jiz jednou sestavilo pole testu, neni treba hledat -> return
 		if(!empty($this->existingTests)){
