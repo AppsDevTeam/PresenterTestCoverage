@@ -56,7 +56,7 @@ class DiaryPresenter
 
 ### 2 Spuštění commandu
 ```
-$ php bin/console adt:presenterTestCoverage
+$ php bin/console adt:component-test-coverage
 ```
 
 ### 3 Příklad crawleru

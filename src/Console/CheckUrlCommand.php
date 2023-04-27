@@ -12,7 +12,7 @@ class CheckUrlCommand extends Command
 {
 	protected array $config = [];
 	protected Service $service;
-	protected static $defaultName = 'adt:presenterTestCoverage';
+	protected static $defaultName = 'adt:component-test-coverage';
 	public function __construct(Service $service) {
 		parent::__construct();
 
@@ -26,7 +26,7 @@ class CheckUrlCommand extends Command
 
 	protected function configure(): void
 	{
-		$this->setName('adt:presenterTestCoverage');
+		$this->setName('adt:component-test-coverage');
 		$this->setDescription('Najde všechny presentery a testy na presentery. Vypíše, které metody (action, render a handle) jsou otestované a které ne.');
 	}
 
