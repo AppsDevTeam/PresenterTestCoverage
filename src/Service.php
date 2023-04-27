@@ -4,6 +4,7 @@ namespace ADT\PresenterTestCoverage;
 
 use Nette\Loaders\RobotLoader;
 use Nette\Utils\Strings;
+use Nette\Schema\Expect;
 
 
 class ComponentCoverageException extends \Exception {
@@ -154,33 +155,40 @@ class Service
 			$this->robotLoader = (new RobotLoader)
 				->setTempDirectory($this->config['tempDir']);
 
-			// nelze pracovat bez zadane slozky testu -> vyhozeni vyjimky
-			if(!array_key_exists('testDir', $this->config) || !isset($this->config['testDir'])) {
-				throw new ComponentCoverageException('Missing testDir in presenterTestCoverage:');
+			/**
+			tempDir: %appDir%/../temp
+			testDir: %appDir%/../tests/Kotatka  #Rootem je sloza na urovni App
+			componentCoverage:
+			grids:
+			componentDir: %appDir%/Components/Grids
+			fileMask: .*Grid
+			methodMask: render
+			 */
+
+			//definice schematu
+			$expected = Expect::structure([
+				'tempDir' => Expect::string()->required(),
+				'testDir' => Expect::string()->required(),
+				'componentCoverage' => Expect::arrayOf(
+					Expect::structure([
+						'componentDir' => Expect::string()->required(),
+						'fileMask' => Expect::string()->required(),
+						'methodMask' => Expect::string()->required()
+					]),
+					'string'
+				)->required()
+			]);
+
+			$processor = new \Nette\Schema\Processor;
+			//validace configu
+			try{
+				$config = $processor->process($expected, $this->config);
+			} catch (\Nette\Schema\ValidationException $e) {
+				throw new ComponentCoverageException($e->getMessage());
 			}
 
 			// iterace pres vsechny nakonfigurovane slozky
 			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
-
-				/*
-				 * Kontroloa ze mame nakonfigurovany vsechny potrebne udaje, pokud neco chybi, dana cast se nezpracuje
-				 * a uzivatel je informovat o tom co chybi.
-				 */
-
-				if (!array_key_exists('componentDir', $dirSetup)) {
-					$this->skippedForMissingConfiguration[] = 'componentDir in '.$key;
-					continue;
-				}
-
-				if (!array_key_exists('fileMask', $dirSetup)) {
-					$this->skippedForMissingConfiguration[] = 'fileMask in '.$key;
-					continue;
-				}
-
-				if (!array_key_exists('methodMask', $dirSetup)) {
-					$this->skippedForMissingConfiguration[] = 'methodMask in '.$key;
-					continue;
-				}
 
 				// nastaveni ktere slozky se budou indexovat/
 				$this->robotLoader->addDirectory($dirSetup['componentDir']);

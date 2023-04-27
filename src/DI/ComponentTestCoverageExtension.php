@@ -9,12 +9,8 @@ class ComponentTestCoverageExtension extends \Nette\DI\CompilerExtension
 {
 	public function loadConfiguration(): void
 	{
-		$config = $this->validateConfig([
-			'presenterDir' => NULL,
-			'tempDir' => NULL,
-			'testDir' => NULL,
-			'componentCoverage' => [],
-		]);
+
+		$config = $this->getConfig();
 
 		$builder = $this->getContainerBuilder();
 
