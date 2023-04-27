@@ -37,7 +37,14 @@ class CheckUrlCommand extends Command
 
 	protected function execute(InputInterface $input, OutputInterface $output): int
 	{
-		$this->service->getRobotLoader()->rebuild();
+		try {
+			$this->service->getRobotLoader()->rebuild();
+		}
+		catch(\ADT\PresenterTestCoverage\ComponentCoverageException $e){
+			$output->writeln("<danger>----------<danger>");
+			$output->writeln("<danger>" .$e->getMessage() . "</danger>\n" );
+			return 1;
+		}
 
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");

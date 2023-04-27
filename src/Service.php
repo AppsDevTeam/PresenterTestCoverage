@@ -5,6 +5,12 @@ namespace ADT\PresenterTestCoverage;
 use Nette\Loaders\RobotLoader;
 use Nette\Utils\Strings;
 
+
+class ComponentCoverageException extends \Exception {
+
+}
+
+
 class Service
 {
 
@@ -136,20 +142,40 @@ class Service
 	public function getRobotLoader(): RobotLoader
 	{
 		if (!$this->robotLoader) {
+
+			//nelze pracovat bez zadane temp slozky -> vyhozeni vyjimky
+			if(!array_key_exists('tempDir', $this->config) || !isset($this->config['tempDir'])) {
+				throw new ComponentCoverageException('Missing tempDir in presenterTestCoverage:');
+			}
+
 			$this->robotLoader = (new RobotLoader)
 				->setTempDirectory($this->config['tempDir']);
+
+			//nelze pracovat bez zadane slozky testu -> vyhozeni vyjimky
+			if(!array_key_exists('testDir', $this->config) || !isset($this->config['testDir'])) {
+				throw new ComponentCoverageException('Missing testDir in presenterTestCoverage:');
+			}
 
 			// iterace pres vsechny nakonfigurovane slozky
 			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
 
-				// kontrola ze mame nakonfigurovany vsechny potrebne udaje
-				// budeme uzivatele informovat o tom ze neco nema dobre nakonfigurovane
-				if(!array_key_exists('componentDir', $dirSetup)
-					|| !array_key_exists('fileMask', $dirSetup)
-					|| !array_key_exists('methodMask', $dirSetup)
-					|| !array_key_exists('testDir', $this->config)) {
+				/*
+				 * Kontroloa ze mame nakonfigurovany vsechny potrebne udaje, pokud neco chybi, dana cast se nezpracuje
+				 * a uzivatel je informovat o tom co chybi.
+				 */
 
-					$this->skippedForMissingConfiguration[] = $key;
+				if (!array_key_exists('componentDir', $dirSetup)) {
+					$this->skippedForMissingConfiguration[] = 'componentDir in '.$key;
+					continue;
+				}
+
+				if (!array_key_exists('fileMask', $dirSetup)) {
+					$this->skippedForMissingConfiguration[] = 'fileMask in '.$key;
+					continue;
+				}
+
+				if (!array_key_exists('methodMask', $dirSetup)) {
+					$this->skippedForMissingConfiguration[] = 'methodMask in '.$key;
 					continue;
 				}
 
