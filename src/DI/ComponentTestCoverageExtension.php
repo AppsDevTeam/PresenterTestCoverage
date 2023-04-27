@@ -5,7 +5,7 @@ namespace ADT\PresenterTestCoverage\DI;
 use ADT\PresenterTestCoverage\Console\CheckUrlCommand;
 use ADT\PresenterTestCoverage\Service;
 
-class PresenterTestCoverageExtension extends \Nette\DI\CompilerExtension
+class ComponentTestCoverageExtension extends \Nette\DI\CompilerExtension
 {
 	public function loadConfiguration(): void
 	{

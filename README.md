@@ -10,13 +10,13 @@ composer require adt/presenter-test-coverage
 ```
 # app/config/config.neon
 extensions:
-    presenterTestCoverage: ADT\PresenterTestCoverage\DI\PresenterTestCoverageExtension
+    componentTestCoverage: ADT\PresenterTestCoverage\DI\ComponentTestCoverageExtension
 ```
 
 ### 1.2 Nastavení
 ```
 # app/config/config.neon
-presenterTestCoverage:
+componentTestCoverage:
     tempDir: %appDir%/../temp
     testDir: %appDir%/../tests/Acceptance  # Root slozka ve ktere se nachazi struktura slozek a souboru odpovidajici strukture aplikace
     componentCoverage:    # vycet komponent pro ktere budou testy provadeny
