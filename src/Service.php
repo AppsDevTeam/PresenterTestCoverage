@@ -92,6 +92,9 @@ class Service
 	 */
 	protected static function isMethodToTest(string $methodName, string $prefix = null) : bool
 	{
+
+		return self::matchesMask($methodName, $prefix);
+
 		if (Strings::startsWith($methodName, $prefix)) {
 			return true;
 		}
@@ -105,7 +108,7 @@ class Service
 	 */
 	public function checkCoverage() {
 		$cwd = getcwd().'/';
-		if (!empty($foundTests) || !empty($missingTests)) {
+		if (!empty($this->foundTests) || !empty($this->missingTests)) {
 			return;
 		}
 
@@ -203,7 +206,9 @@ class Service
 
 			$mask = $this->config['componentCoverage'][$section]['fileMask'];
 
-			if (! Strings::endsWith($_classFile, $mask)) {
+
+
+			if (! self::matchesMask($_classFile, $mask)) {
 				continue;
 			}
 
@@ -290,4 +295,19 @@ class Service
 			}
 		}
 	}
+
+
+	/**
+	 * Kontrola jestli zadany string odpovida masce
+	 * @param string $haystack
+	 * @param string $mask
+	 */
+	protected static function matchesMask(string $haystack, string $mask): bool {
+		if ($mask === '*') {
+			$mask = '.*';
+		}
+
+		return preg_match('/'.$mask.'/', $haystack) ? true : false;
+	}
+
 }

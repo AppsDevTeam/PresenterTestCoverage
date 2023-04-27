@@ -18,12 +18,12 @@ extensions:
 # app/config/config.neon    
 presenterTestCoverage:
     tempDir: %appDir%/../temp
-    testDir: %appDir%/../tests/Acceptance  #Root slozka ve ktere se nachazi struktura slozek a souboru odpovidajici strukture aplikace
-    componentCoverage:    #vycet komponent pro ktere budou testy provadeny
-        grids:    #nazev testovane sekce -  REQUIRED
-            componentDir: %appDir%/Components/Grids    #slozka s implementacemi - REQUIRED
-            fileMask: Grid.php    #soubory pro ktere se bude hledat implementace testu - REQIRED
-            methodMask: render    #druh metod pro ktere se budou hledat testy - REQIRED
+    testDir: %appDir%/../tests/Acceptance  # Root slozka ve ktere se nachazi struktura slozek a souboru odpovidajici strukture aplikace
+    componentCoverage:    # vycet komponent pro ktere budou testy provadeny
+        grids:    # nazev testovane sekce -  REQUIRED
+            componentDir: %appDir%/Components/Grids    # slozka s implementacemi - REQUIRED
+            fileMask: *    # maska souboru pro ktere se hledaji testy [*|nazev|regex] - REQIRED
+            methodMask: *    # maska metod pro ktere se maji hledat testy [*|nazev|regex] - REQIRED
 ```
 
 ### 1.3 Příklad testované třídy
@@ -73,5 +73,3 @@ public function crawlerTest(AcceptanceTester $I)
 	}
 }
 ```
-
-
