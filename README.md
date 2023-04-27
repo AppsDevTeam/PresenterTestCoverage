@@ -15,7 +15,7 @@ extensions:
 
 ### 1.2 Nastavení
 ```
-# app/config/config.neon    
+# app/config/config.neon
 presenterTestCoverage:
     tempDir: %appDir%/../temp
     testDir: %appDir%/../tests/Acceptance  # Root slozka ve ktere se nachazi struktura slozek a souboru odpovidajici strukture aplikace
