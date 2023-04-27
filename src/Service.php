@@ -67,7 +67,7 @@ class Service
 	 */
 	public function getFoundMethods(): array
 	{
-		//pokud je pole prazdne, je sance ze se jeste nic nehledalo -> prohledame
+		// pokud je pole prazdne, je sance ze se jeste nic nehledalo -> prohledame
 		if (empty($this->foundTests)) {
 			$this->findExistingTests();
 			$this->checkCoverage();
@@ -82,7 +82,7 @@ class Service
 	 */
 	public function getMissingMethods(): array
 	{
-		//prazdne pole -> radeji prohledame
+		// prazdne pole -> radeji prohledame
 		if (empty($this->missingTests)) {
 			$this->findExistingTests();
 			$this->checkCoverage();
@@ -118,10 +118,9 @@ class Service
 			return;
 		}
 
-		$this->findMethodsToCover();
-		foreach ($this->methodsToCover as $key => $method) {
+		foreach ($this->findMethodsToCover() as $key => $method) {
 
-			//ziskame cast namespace podle ktere porovnavame
+			// ziskame cast namespace podle ktere porovnavame
 			$position = strpos($method, '\\');
 			if ($position) {
 				$method = substr($method, $position + 1);
@@ -147,7 +146,7 @@ class Service
 	{
 		if (!$this->robotLoader) {
 
-			//nelze pracovat bez zadane temp slozky -> vyhozeni vyjimky
+			// nelze pracovat bez zadane temp slozky -> vyhozeni vyjimky
 			if(!array_key_exists('tempDir', $this->config) || !isset($this->config['tempDir'])) {
 				throw new ComponentCoverageException('Missing tempDir in presenterTestCoverage:');
 			}
@@ -155,7 +154,7 @@ class Service
 			$this->robotLoader = (new RobotLoader)
 				->setTempDirectory($this->config['tempDir']);
 
-			//nelze pracovat bez zadane slozky testu -> vyhozeni vyjimky
+			// nelze pracovat bez zadane slozky testu -> vyhozeni vyjimky
 			if(!array_key_exists('testDir', $this->config) || !isset($this->config['testDir'])) {
 				throw new ComponentCoverageException('Missing testDir in presenterTestCoverage:');
 			}
@@ -207,10 +206,10 @@ class Service
 	 * Metoda vyhleda vsechny soubory podle zadane masky a nastavi je do pole
 	 * @throws \ReflectionException
 	 */
-	protected function findMethodsToCover(): void {
+	protected function findMethodsToCover(): array {
 
 		if (!empty($this->methodsToCover)) {
-			return;
+			return $this->methodsToCover;
 		}
 
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
@@ -288,21 +287,22 @@ class Service
 				 */
 				$testFilePath = realpath($this->config['testDir']). '/' .$filePath."::".$_presenterMethodReflection->getName();
 
-				//vytvareni soupisu metod pro ktere budeme chtit hledat testy
+				// vytvareni soupisu metod pro ktere budeme chtit hledat testy
 				$this->methodsToCover[$testFilePath] = $_presenterReflection->getName()."::".$_presenterMethodReflection->getName();
 			}
 		}
+		return $this->methodsToCover;
 	}
 
 
 	/**
 	 * metoda najde vsechny dostupne testy, ktere mame a ulozi si je
 	 */
-	protected function findExistingTests(): void {
+	protected function findExistingTests(): array {
 
 		// pokud se jiz jednou sestavilo pole testu, neni treba hledat -> return
 		if(!empty($this->existingTests)){
-			return;
+			return $this->existingTests;
 		}
 
 		$testDir = $this->config['testDir'];
@@ -350,6 +350,7 @@ class Service
 				$this->existingTests[str_replace('/', '\\',$shortNamespace)."::".$_crawlerMethodReflection->getName()] = $_classFile."::".$_crawlerMethodReflection->getName();
 			}
 		}
+		return $this->existingTests;
 	}
 
 
@@ -362,7 +363,6 @@ class Service
 		if ($mask === '*') {
 			$mask = '.*';
 		}
-
 		return preg_match('/'.$mask.'/', $haystack) ? true : false;
 	}
 
