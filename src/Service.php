@@ -127,6 +127,10 @@ class Service
 				$method = substr($method, $position + 1);
 			}
 
+			/**
+			 * Roztrideni podle toho zda test byl nalezen ci nikoliv. Pri vzpisu se odstranuje cest cestz k aplikaci
+			 * /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::renderGrid -> tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::renderGrid
+			 */
 			if (array_key_exists($method, $this->existingTests)) {
 				$this->foundTests[] = str_replace($cwd, '', $this->existingTests[$method]);
 			} else {
@@ -266,11 +270,22 @@ class Service
 				// potrebujeme ziskat cestu k souboru v mistni slozce, ta odpovida namespace -> smazeme to co je pred namespacem
 				$postionoOfNamespace = stripos($_presenterReflection->getFileName(), str_replace('\\', '/', $_presenterReflection->getName()));
 
-				//bude treba odstranit prvni element z namespace
+				/**
+				 * potrebujeme se zbavit vseho co je pred casti odpovidajici namespace
+				 * /var/www/html/app/Components/Grids/Bonbon/BonbonGrid.php -> app/Components/Grids/Bobon/BonbonGrid.php
+				 */
 				$filePath = substr($_presenterReflection->getFileName(), $postionoOfNamespace);
+
+				/**
+				 * potrebujeme odstranit root sloyku namespace
+				 * /app/Components/Grids/Bonbon/BonbonGrid.php -> Components/Grids/Bonbon/BonbonGrid.php
+				 */
 				$filePath = substr($filePath, (strpos( $filePath, '/') + 1));
 
-				//plna cesta k testovacimu souboru
+				/**
+				 * Vytvoreni plne cesty k testovacimu souboru
+				 * "/var/www/html/tests/Kotatka" . "/" . "Components/Grids/Bonbon/BonbonGrid.php" . "::" . "render" -> /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::render
+				 */
 				$testFilePath = realpath($this->config['testDir']). '/' .$filePath."::".$_presenterMethodReflection->getName();
 
 				//vytvareni soupisu metod pro ktere budeme chtit hledat testy
@@ -302,9 +317,11 @@ class Service
 				continue;
 			}
 
-			//mame cestu k souboru, protoze namespace odpovida ceste k souboru, mame v podstate namespace bez prvniho elementu
+			/**
+			 * mame cestu k souboru, protoze namespace odpovida ceste k souboru, mame v podstate namespace bez prvniho elementu
+			 * /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php -> Components/Grids/Bonbon/BonbonGrid.php
+			 */
 			$classFileRootedPath = str_replace($crawlerBasePath, '', $_classFile);
-
 			require_once $_classFile;
 
 			$_crawlerReflection = new \ReflectionClass($_className);
@@ -319,9 +336,17 @@ class Service
 					continue;
 				}
 
-				//konverze nazvu na "kratky namespace"
+				/**
+				 * konverze cesty k souboru na "kratky namespace"
+				 * Components/Grids/Bonbon/Bonbon.php -> Components/Grids/Bonbon/BonbonGrid
+				 */
 				$shortNamespace = substr($classFileRootedPath, 0, strrpos($classFileRootedPath, '.'));
 
+				/**
+				 * Components/Grids/Bonbon/BonbonGrid -> Components\Grids\Bonbon\BonbonGrid
+				 * "Components\Grids\Bonbon\BonbonGrid" . "::" . "renderGrid" -> "Components\Grids\Bonbon\BonbonGrid::renderGrid"
+				 * "/var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php" . "::" . "renderGrid" -> "/var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::renderGrid"
+				 */
 				$this->existingTests[str_replace('/', '\\',$shortNamespace)."::".$_crawlerMethodReflection->getName()] = $_classFile."::".$_crawlerMethodReflection->getName();
 			}
 		}
