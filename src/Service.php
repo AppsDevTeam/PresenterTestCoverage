@@ -112,7 +112,7 @@ class Service
 	 * metoda kontroluje pokryti metod testy.
 	 * @throws \ReflectionException
 	 */
-	protected function checkCoverage() {
+	protected function checkCoverage(): void {
 		$cwd = getcwd().'/';
 		if (!empty($this->foundTests) || !empty($this->missingTests)) {
 			return;
@@ -194,7 +194,7 @@ class Service
 	/**
 	 * Pouze getter, vraci informace o selhani nastaveni konfigurace
 	 */
-	public function getSkippedForMissingConfiguration() {
+	public function getSkippedForMissingConfiguration(): array {
 		return $this->skippedForMissingConfiguration;
 	}
 
@@ -283,7 +283,12 @@ class Service
 	/**
 	 * metoda najde vsechny dostupne testy, ktere mame a ulozi si je
 	 */
-	public function findAvailableTests(): void {
+	protected function findAvailableTests(): void {
+
+		// pokud se jiz jednou sestavilo pole testu, neni treba hledat -> return
+		if(!empty($this->existingTests)){
+			return;
+		}
 
 		$testDir = $this->config['testDir'];
 
