@@ -187,17 +187,21 @@ class Service
 				throw new ComponentCoverageException($e->getMessage());
 			}
 
+			$this->robotLoader->addDirectory($this->config['testDir']);
+
 			// iterace pres vsechny nakonfigurovane slozky
 			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
 
 				// nastaveni ktere slozky se budou indexovat/
 				$this->robotLoader->addDirectory($dirSetup['componentDir']);
-				$this->robotLoader->addDirectory($this->config['testDir']);
 
 				// nastavime si pro ktere vsechny slozky budeme pracovat
 				$this->coveredComponents[] = ["dir" => $dirSetup['componentDir'], "section" => $key];
 			}
+
+			$this->robotLoader->register();
 		}
+
 		return $this->robotLoader;
 	}
 
@@ -248,8 +252,6 @@ class Service
 			if (! self::matchesMask($_classFile, $mask)) {
 				continue;
 			}
-
-			require_once $_classFile;
 
 			$_presenterReflection = new \ReflectionClass($_className);
 
@@ -314,7 +316,6 @@ class Service
 		}
 
 		$testDir = $this->config['testDir'];
-
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 			$namespaceArray = null;
 
@@ -330,7 +331,6 @@ class Service
 			 * /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php -> Components/Grids/Bonbon/BonbonGrid.php
 			 */
 			$classFileRootedPath = str_replace($crawlerBasePath, '', $_classFile);
-			require_once $_classFile;
 
 			$_crawlerReflection = new \ReflectionClass($_className);
 
