@@ -198,7 +198,6 @@ class Service
 				// nastavime si pro ktere vsechny slozky budeme pracovat
 				$this->coveredComponents[] = ["dir" => $dirSetup['componentDir'], "section" => $key];
 			}
-
 			$this->robotLoader->register();
 		}
 
@@ -223,82 +222,75 @@ class Service
 		if (!empty($this->methodsToCover)) {
 			return $this->methodsToCover;
 		}
-
+		$componentCount = count($this->coveredComponents);
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 
 			// kontrola jestli se jedna o neco co ma byt pokryto testy
-			$notFound = true;
 			$section = '';
+
 			foreach ($this->coveredComponents as $key => $componentDir) {
+
 				// kontrola jestli dany soubor je soucasti souboru, ktere obsahuji implementaci pro kterou by mel existovat test.
-				if (! Strings::startsWith($_classFile, $componentDir['dir'] . '/')) {
+				if (!Strings::startsWith($_classFile, $componentDir['dir'] . '/')) {
 					continue;
 				}
+
 				// nalezen, nastavime notFound na false a ukoncime iterovani
-				$notFound = false;
 				$section = $componentDir['section'];
-				break;
-			}
 
-			// pokud jsme dany soubor nenasli, budeme pokracovat dalsi iteraci
-			if ($notFound) {
-				continue;
-			}
+				$mask = $this->config['componentCoverage'][$section]['fileMask'];
 
-			$mask = $this->config['componentCoverage'][$section]['fileMask'];
-
-
-
-			if (! self::matchesMask($_classFile, $mask)) {
-				continue;
-			}
-
-			$_presenterReflection = new \ReflectionClass($_className);
-
-			// nechceme zpracovavat abstraktni tridy -> continue
-			if ($_presenterReflection->isAbstract()) {
-				continue;
-			}
-
-			// maska metody, chceme zpracovat jenom metody ktere maji danou masku
-			$methodMask = null;
-			if (isset($this->config['componentCoverage'][$section]['methodMask'])) {
-				$methodMask = $this->config['componentCoverage'][$section]['methodMask'];
-			}
-
-			foreach ($_presenterReflection->getMethods() as $_presenterMethodReflection) {
-				// testy na abstraktni metody nemaji smysl -> continue
-				if ($_presenterMethodReflection->isAbstract()) {
+				if (!self::matchesMask($_classFile, $mask)) {
 					continue;
 				}
 
-				if (! static::isMethodToTest($_presenterMethodReflection->getName(), $methodMask)) {
+				$_presenterReflection = new \ReflectionClass($_className);
+
+				// nechceme zpracovavat abstraktni tridy -> continue
+				if ($_presenterReflection->isAbstract()) {
 					continue;
 				}
 
-				// potrebujeme ziskat cestu k souboru v mistni slozce, ta odpovida namespace -> smazeme to co je pred namespacem
-				$postionoOfNamespace = stripos($_presenterReflection->getFileName(), str_replace('\\', '/', $_presenterReflection->getName()));
+				// maska metody, chceme zpracovat jenom metody ktere maji danou masku
+				$methodMask = null;
+				if (isset($this->config['componentCoverage'][$section]['methodMask'])) {
+					$methodMask = $this->config['componentCoverage'][$section]['methodMask'];
+				}
 
-				/**
-				 * potrebujeme se zbavit vseho co je pred casti odpovidajici namespace
-				 * /var/www/html/app/Components/Grids/Bonbon/BonbonGrid.php -> app/Components/Grids/Bobon/BonbonGrid.php
-				 */
-				$filePath = substr($_presenterReflection->getFileName(), $postionoOfNamespace);
+				foreach ($_presenterReflection->getMethods() as $_presenterMethodReflection) {
+					// testy na abstraktni metody nemaji smysl -> continue
+					if ($_presenterMethodReflection->isAbstract()) {
+						continue;
+					}
 
-				/**
-				 * potrebujeme odstranit root sloyku namespace
-				 * /app/Components/Grids/Bonbon/BonbonGrid.php -> Components/Grids/Bonbon/BonbonGrid.php
-				 */
-				$filePath = substr($filePath, (strpos( $filePath, '/') + 1));
+					if (!static::isMethodToTest($_presenterMethodReflection->getName(), $methodMask)) {
+						continue;
+					}
 
-				/**
-				 * Vytvoreni plne cesty k testovacimu souboru
-				 * "/var/www/html/tests/Kotatka" . "/" . "Components/Grids/Bonbon/BonbonGrid.php" . "::" . "render" -> /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::render
-				 */
-				$testFilePath = realpath($this->config['testDir']). '/' .$filePath."::".$_presenterMethodReflection->getName();
+					// potrebujeme ziskat cestu k souboru v mistni slozce, ta odpovida namespace -> smazeme to co je pred namespacem
+					$postionoOfNamespace = stripos($_presenterReflection->getFileName(), str_replace('\\', '/', $_presenterReflection->getName()));
 
-				// vytvareni soupisu metod pro ktere budeme chtit hledat testy
-				$this->methodsToCover[$testFilePath] = $_presenterReflection->getName()."::".$_presenterMethodReflection->getName();
+					/**
+					 * potrebujeme se zbavit vseho co je pred casti odpovidajici namespace
+					 * /var/www/html/app/Components/Grids/Bonbon/BonbonGrid.php -> app/Components/Grids/Bobon/BonbonGrid.php
+					 */
+					$filePath = substr($_presenterReflection->getFileName(), $postionoOfNamespace);
+
+					/**
+					 * potrebujeme odstranit root sloyku namespace
+					 * /app/Components/Grids/Bonbon/BonbonGrid.php -> Components/Grids/Bonbon/BonbonGrid.php
+					 */
+					$filePath = substr($filePath, (strpos($filePath, '/') + 1));
+
+					/**
+					 * Vytvoreni plne cesty k testovacimu souboru
+					 * "/var/www/html/tests/Kotatka" . "/" . "Components/Grids/Bonbon/BonbonGrid.php" . "::" . "render" -> /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::render
+					 */
+					$testFilePath = realpath($this->config['testDir']) . '/' . $filePath . "::" . $_presenterMethodReflection->getName();
+
+					// vytvareni soupisu metod pro ktere budeme chtit hledat testy
+					$this->methodsToCover[$testFilePath] = $_presenterReflection->getName() . "::" . $_presenterMethodReflection->getName();
+				}
 			}
 		}
 		return $this->methodsToCover;
