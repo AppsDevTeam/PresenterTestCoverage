@@ -91,35 +91,6 @@ class Service
 		return $this->missingTests;
 	}
 
-	/**
-	 * Metoda vraci pole s url adresami, ktere jsou nalezeny v existujicich testech
-	 * @param string|null $prefix
-	 * @throws ComponentCoverageException
-	 * @throws \ReflectionException
-	 */
-	public function getUrls(?string $prefix = null): array
-	{
-		$urls = [];
-		foreach ($this->getFoundMethods() as $method) {
-			if ($prefix && !Strings::startsWith($method, $prefix)) {
-				continue;
-			}
-
-			list($classFile, $method) = explode('::', $method);
-
-			$classFile = getcwd()."/".$classFile;
-
-			//Potrebujeme ziskat tridu k prislusnemu souboru
-			$urls = array_merge($urls, (new (array_search($classFile, $this->getRobotLoader()->getIndexedClasses())))->$method());
-		}
-		return $urls;
-	}
-
-
-
-
-
-
 
 	/**
 	 * Kontrola zda se jedna o metodu, ktera je urcena nastavenim k otestovani.
