@@ -67,6 +67,15 @@ class CheckUrlCommand extends Command
 			}
 		}
 
+		$notPSR = $this->service->getPSR4Incompatible();
+		if(!empty($notPSR)){
+			$output->writeln("----------");
+			$output->writeln("Soubory neplnící PSR-4 konvenci: ");
+			foreach ($notPSR as $incompatible) {
+				$output->writeln("<danger>" . $incompatible . "</danger>" );
+			}
+		}
+
 		return 1;
 	}
 }

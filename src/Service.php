@@ -53,6 +53,16 @@ class Service
 	private $methodsToCover = [];
 
 	/**
+	 * @var array - obsahuje preklady na testovaci soubor pokud je zadana testFile mask. Preklad z
+	 */
+	private $spceialFiles = [];
+
+	/**
+	 * @var array - obsahuje soubory, ktere neni mozne zpracovat pro nekompatibilnost s PSR4
+	 */
+	private $pSR4Incompatible = [];
+
+	/**
 	 * @param array $config
 	 */
 	public function setConfig(array $config = []): self
@@ -93,19 +103,39 @@ class Service
 
 
 	/**
+	 * Metoda vraci pole s url adresami, ktere jsou nalezeny v existujicich testech
+	 * @param string|null $prefix
+	 * @throws ComponentCoverageException
+	 * @throws \ReflectionException
+	 */
+	public function getUrls(?string $prefix = null): array
+	{
+		$urls = [];
+		foreach ($this->getFoundMethods() as $method) {
+			if ($prefix && !Strings::startsWith($method, $prefix)) {
+				continue;
+			}
+
+			list($classFile, $method) = explode('::', $method);
+
+			$classFile = getcwd()."/".$classFile;
+
+			//Potrebujeme ziskat tridu k prislusnemu souboru
+			$urls = array_merge($urls, (new (array_search($classFile, $this->getRobotLoader()->getIndexedClasses())))->$method());
+		}
+		return $urls;
+	}
+
+
+	/**
 	 * Kontrola zda se jedna o metodu, ktera je urcena nastavenim k otestovani.
 	 * @param string $methodName
 	 * @param string|null $prefix
 	 */
 	protected static function isMethodToTest(string $methodName, string $prefix = null) : bool
 	{
-
 		return self::matchesMask($methodName, $prefix);
 
-		if (Strings::startsWith($methodName, $prefix)) {
-			return true;
-		}
-		return false;
 	}
 
 
@@ -120,7 +150,6 @@ class Service
 		}
 
 		foreach ($this->findMethodsToCover() as $key => $method) {
-
 			// ziskame cast namespace podle ktere porovnavame
 			$position = strpos($method, '\\');
 			if ($position) {
@@ -161,8 +190,9 @@ class Service
 			componentCoverage:
 			grids:
 			componentDir: %appDir%/Components/Grids
-			fileMask: .*Grid
-			methodMask: render
+			appFileMask: '(.*)Presenter.php'
+			testFileMask: '{$1}PresenterCest.php'
+			methodMask: action.*
 			 */
 
 			//definice schematu
@@ -172,7 +202,8 @@ class Service
 				'componentCoverage' => Expect::arrayOf(
 					Expect::structure([
 						'componentDir' => Expect::string()->required(),
-						'fileMask' => Expect::string()->required(),
+						'appFileMask' => Expect::string()->required(),
+						'testFileMask' => Expect::string(),
 						'methodMask' => Expect::string()->required()
 					]),
 					'string'
@@ -192,7 +223,7 @@ class Service
 			// iterace pres vsechny nakonfigurovane slozky
 			foreach ($this->config['componentCoverage'] as $key => $dirSetup) {
 
-				// nastaveni ktere slozky se budou indexovat/
+				// nastaveni ktere slozky se budou indexovat
 				$this->robotLoader->addDirectory($dirSetup['componentDir']);
 
 				// nastavime si pro ktere vsechny slozky budeme pracovat
@@ -214,15 +245,25 @@ class Service
 
 
 	/**
+	 * Pouze getter, vraci informace o tom ktere soubory nelze ypracovat protoze nejsou PSR4 kompatibilni
+	 */
+	public function getPSR4Incompatible(): array{
+		return $this->pSR4Incompatible;
+	}
+
+
+	/**
 	 * Metoda vyhleda vsechny soubory podle zadane masky a nastavi je do pole
 	 * @throws \ReflectionException
 	 */
 	protected function findMethodsToCover(): array {
 
+
 		if (!empty($this->methodsToCover)) {
 			return $this->methodsToCover;
 		}
-		$componentCount = count($this->coveredComponents);
+
+		$cwd = getcwd().'/';
 		foreach ($this->getRobotLoader()->getIndexedClasses() as $_className => $_classFile) {
 
 			// kontrola jestli se jedna o neco co ma byt pokryto testy
@@ -238,8 +279,7 @@ class Service
 				// nalezen, nastavime notFound na false a ukoncime iterovani
 				$section = $componentDir['section'];
 
-				$mask = $this->config['componentCoverage'][$section]['fileMask'];
-
+				$mask = $this->config['componentCoverage'][$section]['appFileMask'];
 				if (!self::matchesMask($_classFile, $mask)) {
 					continue;
 				}
@@ -270,11 +310,19 @@ class Service
 					// potrebujeme ziskat cestu k souboru v mistni slozce, ta odpovida namespace -> smazeme to co je pred namespacem
 					$postionoOfNamespace = stripos($_presenterReflection->getFileName(), str_replace('\\', '/', $_presenterReflection->getName()));
 
+					//PSR4 nekompatibilni strukturu nelze zpracovat a ukoncujeme praci s timto souborem
+					if($postionoOfNamespace === false){
+						$this->pSR4Incompatible[] = str_replace($cwd, '', $_presenterReflection->getFileName());
+						break;
+					}
+
+
 					/**
 					 * potrebujeme se zbavit vseho co je pred casti odpovidajici namespace
 					 * /var/www/html/app/Components/Grids/Bonbon/BonbonGrid.php -> app/Components/Grids/Bobon/BonbonGrid.php
 					 */
 					$filePath = substr($_presenterReflection->getFileName(), $postionoOfNamespace);
+
 
 					/**
 					 * potrebujeme odstranit root sloyku namespace
@@ -282,14 +330,25 @@ class Service
 					 */
 					$filePath = substr($filePath, (strpos($filePath, '/') + 1));
 
+
 					/**
 					 * Vytvoreni plne cesty k testovacimu souboru
 					 * "/var/www/html/tests/Kotatka" . "/" . "Components/Grids/Bonbon/BonbonGrid.php" . "::" . "render" -> /var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::render
+					 * Pokud budeme mit navic k dispozici masku testovaciho souboru, bude treba prislusne upravit soubor se kterym budeme pracovat
 					 */
+					if (isset($this->config['componentCoverage'][$section]['testFileMask'])) {
+						$mathches = [];
+						preg_match("/" . $this->config['componentCoverage'][$section]['appFileMask'] . "/", $filePath, $mathches);
+
+						if (count($mathches) === 2) {
+							$filePath = str_replace('{$1}', $mathches[1], $this->config['componentCoverage'][$section]['testFileMask']);
+						}
+					}
+
 					$testFilePath = realpath($this->config['testDir']) . '/' . $filePath . "::" . $_presenterMethodReflection->getName();
 
 					// vytvareni soupisu metod pro ktere budeme chtit hledat testy
-					$this->methodsToCover[$testFilePath] = $_presenterReflection->getName() . "::" . $_presenterMethodReflection->getName();
+					$this->methodsToCover[$testFilePath] = $filePath . "::" . $_presenterMethodReflection->getName();
 				}
 			}
 		}
@@ -343,11 +402,10 @@ class Service
 				$shortNamespace = substr($classFileRootedPath, 0, strrpos($classFileRootedPath, '.'));
 
 				/**
-				 * Components/Grids/Bonbon/BonbonGrid -> Components\Grids\Bonbon\BonbonGrid
-				 * "Components\Grids\Bonbon\BonbonGrid" . "::" . "renderGrid" -> "Components\Grids\Bonbon\BonbonGrid::renderGrid"
+				 * "Components/Grids/Bonbon/BonbonGrid" . "::" . "renderGrid" -> "Components/Grids/Bonbon/BonbonGrid::renderGrid"
 				 * "/var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php" . "::" . "renderGrid" -> "/var/www/html/tests/Kotatka/Components/Grids/Bonbon/BonbonGrid.php::renderGrid"
 				 */
-				$this->existingTests[str_replace('/', '\\',ucfirst($shortNamespace))."::".$_crawlerMethodReflection->getName()] = $_classFile."::".$_crawlerMethodReflection->getName();
+				$this->existingTests[$classFileRootedPath."::".$_crawlerMethodReflection->getName()] = $_classFile."::".$_crawlerMethodReflection->getName();
 			}
 		}
 		return $this->existingTests;
@@ -360,9 +418,6 @@ class Service
 	 * @param string $mask
 	 */
 	protected static function matchesMask(string $haystack, string $mask): bool {
-		if ($mask === '*') {
-			$mask = '.*';
-		}
 		return preg_match('/'.$mask.'/', $haystack) ? true : false;
 	}
 
