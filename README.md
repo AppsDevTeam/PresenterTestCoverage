@@ -16,7 +16,7 @@ composer require adt/presenter-test-coverage
 ```
 # app/config/config.neon
 extensions:
-    componentTestCoverage: ADT\ComponentTestCoverage\DI\ComponentTestCoverageExtension
+    componentTestCoverage: ADT\PresenterTestCoverage\DI\ComponentTestCoverageExtension
 ```
 
 ### 1.2 Nastavení
