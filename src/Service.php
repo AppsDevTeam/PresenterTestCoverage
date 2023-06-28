@@ -120,8 +120,10 @@ class Service
 
 			$classFile = getcwd()."/".$classFile;
 
+			$toObject = array_search($classFile, $this->getRobotLoader()->getIndexedClasses());
+
 			//Potrebujeme ziskat tridu k prislusnemu souboru
-			$urls = array_merge($urls, (new (array_search($classFile, $this->getRobotLoader()->getIndexedClasses())))->$method());
+			$urls = array_merge($urls, (new $toObject())->$method());
 		}
 		return $urls;
 	}
