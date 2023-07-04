@@ -28,6 +28,10 @@ class CheckUrlCommand extends Command
 	{
 		$this->setName('adt:component-test-coverage');
 		$this->setDescription('Najde všechny presentery a testy na presentery. Vypíše, které metody (action, render a handle) jsou otestované a které ne.');
+		$this->addOption("PSR4");
+		$this->addOption("MissingTests", "MT");
+		$this->addOption("WrongConfiguration", "WConf");
+
 	}
 
 	protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -45,6 +49,61 @@ class CheckUrlCommand extends Command
 			$output->writeln("<danger>" .$e->getMessage() . "</danger>\n" );
 			return 1;
 		}
+
+
+		$this->service->getFoundMethods();
+
+		if($input->getOptions()["PSR4"] || $input->getOptions()["MissingTests"] || $input->getOptions()["WrongConfiguration"]) {
+
+			if($input->getOptions()["PSR4"]) {
+				$wrongPSRCount = count($this->service->getPSR4Incompatible());
+				if($wrongPSRCount){
+					$output->writeln("----------");
+					$output->writeln("Soubory neplnící PSR-4 konvenci: ");
+					foreach ($this->service->getPSR4Incompatible() as $incompatible) {
+						$output->writeln("<danger>" . $incompatible . "</danger>" );
+					}
+					return 1;
+				}
+				return 0;
+			}
+
+
+			if($input->getOptions()["MissingTests"]) {
+				$missingTestCount = count($this->service->getMissingMethods());
+
+				if($missingTestCount){
+					$output->writeln("----------");
+					$output->writeln("Chybějící testy: ");
+					foreach ($this->service->getMissingMethods() as $_missingMethod) {
+						$output->writeln("<danger>" . $_missingMethod . "</danger>" );
+					}
+					return 1;
+				}
+
+				return 0;
+			}
+
+
+			if($input->getOptions()["WrongConfiguration"]) {
+				$wrongConfigurationCount =  count($this->service->getMissingMethods());
+
+				if($wrongConfigurationCount){
+
+					$output->writeln("----------");
+					$output->writeln("Chyby v konfiguraci: ");
+					foreach ($this->service->getMissingMethods() as $misconfiguredSection) {
+						$output->writeln("<danger>" . $misconfiguredSection . "</danger>" );
+					}
+
+					return 1;
+				}
+
+				return 0;
+			}
+
+		}
+
 
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");
@@ -76,6 +135,6 @@ class CheckUrlCommand extends Command
 			}
 		}
 
-		return 1;
+		return 0;
 	}
 }
