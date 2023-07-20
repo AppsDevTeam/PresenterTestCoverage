@@ -29,8 +29,8 @@ class CheckUrlCommand extends Command
 		$this->setName('adt:component-test-coverage');
 		$this->setDescription('Najde všechny presentery a testy na presentery. Vypíše, které metody (action, render a handle) jsou otestované a které ne.');
 		$this->addOption("PSR4");
-		$this->addOption("MissingTests", "MT");
-		$this->addOption("WrongConfiguration", "WConf");
+		$this->addOption("missing-tests", "MT");
+		$this->addOption("wrong-configuration", "WConf");
 
 	}
 
@@ -53,9 +53,9 @@ class CheckUrlCommand extends Command
 
 		$this->service->getFoundMethods();
 
-		if($input->getOptions()["PSR4"] || $input->getOptions()["MissingTests"] || $input->getOptions()["WrongConfiguration"]) {
+		if($input->getOption("PSR4") || $input->getOption("missing-tests") || $input->getOption("wrong-configuration")) {
 
-			if($input->getOptions()["PSR4"]) {
+			if($input->getOption("PSR4")) {
 				$wrongPSRCount = count($this->service->getPSR4Incompatible());
 				if($wrongPSRCount){
 					$output->writeln("----------");
@@ -69,7 +69,7 @@ class CheckUrlCommand extends Command
 			}
 
 
-			if($input->getOptions()["MissingTests"]) {
+			if($input->getOption("missing-tests")) {
 				$missingTestCount = count($this->service->getMissingMethods());
 
 				if($missingTestCount){
@@ -85,14 +85,14 @@ class CheckUrlCommand extends Command
 			}
 
 
-			if($input->getOptions()["WrongConfiguration"]) {
-				$wrongConfigurationCount =  count($this->service->getMissingMethods());
+			if($input->getOption("wrong-configuration")) {
+				$wrongConfigurationCount =  count($this->service->getSkippedForMissingConfiguration());
 
 				if($wrongConfigurationCount){
 
 					$output->writeln("----------");
 					$output->writeln("Chyby v konfiguraci: ");
-					foreach ($this->service->getMissingMethods() as $misconfiguredSection) {
+					foreach ($this->service->getSkippedForMissingConfiguration() as $misconfiguredSection) {
 						$output->writeln("<danger>" . $misconfiguredSection . "</danger>" );
 					}
 
