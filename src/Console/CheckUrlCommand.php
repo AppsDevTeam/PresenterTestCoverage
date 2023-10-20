@@ -28,9 +28,8 @@ class CheckUrlCommand extends Command
 	{
 		$this->setName('adt:component-test-coverage');
 		$this->setDescription('Najde všechny presentery a testy na presentery. Vypíše, které metody (action, render a handle) jsou otestované a které ne.');
-		$this->addOption("PSR4");
+		$this->addOption("psr4");
 		$this->addOption("missing-tests", "MT");
-		$this->addOption("wrong-configuration", "WConf");
 
 	}
 
@@ -53,9 +52,9 @@ class CheckUrlCommand extends Command
 
 		$this->service->getFoundMethods();
 
-		if($input->getOption("PSR4") || $input->getOption("missing-tests") || $input->getOption("wrong-configuration")) {
+		if($input->getOption("psr4") || $input->getOption("missing-tests")) {
 
-			if($input->getOption("PSR4")) {
+			if($input->getOption("psr4")) {
 				$wrongPSRCount = count($this->service->getPSR4Incompatible());
 				if($wrongPSRCount){
 					$output->writeln("----------");
@@ -84,24 +83,6 @@ class CheckUrlCommand extends Command
 				return 0;
 			}
 
-
-			if($input->getOption("wrong-configuration")) {
-				$wrongConfigurationCount =  count($this->service->getSkippedForMissingConfiguration());
-
-				if($wrongConfigurationCount){
-
-					$output->writeln("----------");
-					$output->writeln("Chyby v konfiguraci: ");
-					foreach ($this->service->getSkippedForMissingConfiguration() as $misconfiguredSection) {
-						$output->writeln("<danger>" . $misconfiguredSection . "</danger>" );
-					}
-
-					return 1;
-				}
-
-				return 0;
-			}
-
 		}
 
 
@@ -117,14 +98,6 @@ class CheckUrlCommand extends Command
 			$output->writeln("<danger>" . $_missingMethod . "</danger>" );
 		}
 
-		$wrongConfig = $this->service->getSkippedForMissingConfiguration();
-		if(!empty($wrongConfig)){
-			$output->writeln("----------");
-			$output->writeln("Chyby v konfiguraci: ");
-			foreach ($wrongConfig as $misconfiguredSection) {
-				$output->writeln("<danger>" . $misconfiguredSection . "</danger>" );
-			}
-		}
 
 		$notPSR = $this->service->getPSR4Incompatible();
 		if(!empty($notPSR)){

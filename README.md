@@ -52,11 +52,10 @@ $ php bin/console adt:component-test-coverage
 
 ### 2.1 Přepínače
 ```
---PSR4 - provede kontrolu zda se neyskytují soubory, které nejsou kompatibilni s PSR4 standardem pokdu se vyskytnou je vrácena hodnota 1. Na obrazovce se vypíše seznam souborů neplnících PSR-4.
+--psr4 - provede kontrolu zda se neyskytují soubory, které nejsou kompatibilni s PSR4 standardem pokdu se vyskytnou je vrácena hodnota 1. Na obrazovce se vypíše seznam souborů neplnících PSR-4.
 
 --missing-tests - provede kontrolu zda se v projektu nenecházejí metody pro které nejsou vytvořeny testy. Pokud jsou takové nalezeny, je vrácena hodnota 1 a na obrazovce se vypíší chybějící testy.
 
---wrong-configuration - zjistí zda není chyba v konfiguraci. Pokud existuje chyba, vrátí hodnotu 1.
 ```
 
 ## 3 Příklad

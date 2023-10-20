@@ -25,12 +25,6 @@ class Service
 	 */
 	private $coveredComponents = [];
 
-	/**
-	 * @var array
-	 * Pole obsahujici jemna komponent ktere nejsou dobre nakonfigurovane a neni mozne je otestovat
-	 */
-	private $skippedForMissingConfiguration = [];
-
 
 	/**
 	 * @var array testy, ktere se nam podarilo najit v prislusne slozce
@@ -235,14 +229,6 @@ class Service
 		}
 
 		return $this->robotLoader;
-	}
-
-
-	/**
-	 * Pouze getter, vraci informace o selhani nastaveni konfigurace
-	 */
-	public function getSkippedForMissingConfiguration(): array {
-		return $this->skippedForMissingConfiguration;
 	}
 
 
