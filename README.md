@@ -9,7 +9,7 @@ Konfigurace umožňuje přizpůsobení i pro další komponenty a pro jiný fram
 ## 1 Instalace do aplikace
 Composer:
 ```
-composer require adt/presenter-test-coverage
+composer require --dev adt/presenter-test-coverage
 ```
 
 ### 1.1 Registrace extension
@@ -32,13 +32,13 @@ componentTestCoverage:
     componentCoverage:
         clientModulePresenters:    # Název kategorie testovaných věcí. Libovolný název.
             componentDir: %appDir%/Modules/ClientModule    # Složka s implementací daných komponent
-            appFileMask: (.*)Presenter.php    # Regulární výraz: pro které soubory v app složce se má kontrolovat existence testů
-            testFileMask: {$1}PresenterCest.php    # Maska souborů v test složce, pokud testovací framework potřebuje speciální suffix. Např.: Pokud je presenter v `%appDir%/Modules/ClientModule/ClientPresenter.php`, bude se k němu hledat soubor s testem v `<testDir>/Modules/ClientModule/ClientPresenterCest.php`.
+            appFileMask: '(.*)Presenter.php'    # Regulární výraz: pro které soubory v app složce se má kontrolovat existence testů
+            testFileMask: '{$1}PresenterCest.php'    # Maska souborů v test složce, pokud testovací framework potřebuje speciální suffix. Např.: Pokud je presenter v `%appDir%/Modules/ClientModule/ClientPresenter.php`, bude se k němu hledat soubor s testem v `<testDir>/Modules/ClientModule/ClientPresenterCest.php`.
             methodMask: action.*    # Regulární výraz: pro které metody se mají hledat metody v testech. Aktuálně se jména musí shodovat 1:1.
         grids:
             componentDir: %appDir%/Components/Grids
-            appFileMask: (.*)Grid.php
-            testFileMask: {$1}GridCest.php
+            appFileMask: '(.*)Grid.php'
+            testFileMask: '{$1}GridCest.php'
             methodMask: render.*
 	...
 ```
