@@ -3,11 +3,13 @@
 namespace ADT\PresenterTestCoverage\Console;
 
 use ADT\PresenterTestCoverage\Service;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Formatter\OutputFormatterStyle;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
+#[AsCommand(name: 'adt:component-test-coverage', description: 'Writes hello world.')]
 class CheckUrlCommand extends Command
 {
 	protected array $config = [];
