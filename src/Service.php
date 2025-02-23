@@ -128,7 +128,7 @@ class Service
 	 * @param string $methodName
 	 * @param string|null $prefix
 	 */
-	protected static function isMethodToTest(string $methodName, string $prefix = null) : bool
+	protected static function isMethodToTest(string $methodName, ?string $prefix = null) : bool
 	{
 		return self::matchesMask($methodName, '^'.$prefix);
 
