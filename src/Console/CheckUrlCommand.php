@@ -48,7 +48,7 @@ class CheckUrlCommand extends Command
 		catch(\ADT\PresenterTestCoverage\ComponentCoverageException $e){
 			$output->writeln("<danger>----------<danger>");
 			$output->writeln("<danger>" .$e->getMessage() . "</danger>\n" );
-			return 1;
+			return Command::FAILURE;
 		}
 
 
@@ -64,9 +64,9 @@ class CheckUrlCommand extends Command
 					foreach ($this->service->getPSR4Incompatible() as $incompatible) {
 						$output->writeln("<danger>" . $incompatible . "</danger>" );
 					}
-					return 1;
+					return Command::FAILURE;
 				}
-				return 0;
+				return Command::SUCCESS;
 			}
 
 
@@ -79,15 +79,16 @@ class CheckUrlCommand extends Command
 					foreach ($this->service->getMissingMethods() as $_missingMethod) {
 						$output->writeln("<danger>" . $_missingMethod . "</danger>" );
 					}
-					return 1;
+					return Command::FAILURE;
 				}
 
-				return 0;
+				return Command::SUCCESS;
 			}
 
 		}
 
 
+		$return = Command::SUCCESS;
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");
 		foreach ($this->service->getFoundMethods() as $_missingMethod) {
@@ -98,6 +99,7 @@ class CheckUrlCommand extends Command
 		$output->writeln("Chybějící testy: ");
 		foreach ($this->service->getMissingMethods() as $_missingMethod) {
 			$output->writeln("<danger>" . $_missingMethod . "</danger>" );
+			$return = Command::FAILURE;
 		}
 
 
@@ -107,9 +109,10 @@ class CheckUrlCommand extends Command
 			$output->writeln("Soubory neplnící PSR-4 konvenci: ");
 			foreach ($notPSR as $incompatible) {
 				$output->writeln("<danger>" . $incompatible . "</danger>" );
+				$return = Command::FAILURE;
 			}
 		}
 
-		return 0;
+		return $return;
 	}
 }
