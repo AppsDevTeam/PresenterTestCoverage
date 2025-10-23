@@ -88,6 +88,7 @@ class CheckUrlCommand extends Command
 		}
 
 
+		$return = 0;
 		$output->writeln("----------");
 		$output->writeln("Nalezené testy: ");
 		foreach ($this->service->getFoundMethods() as $_missingMethod) {
@@ -98,6 +99,7 @@ class CheckUrlCommand extends Command
 		$output->writeln("Chybějící testy: ");
 		foreach ($this->service->getMissingMethods() as $_missingMethod) {
 			$output->writeln("<danger>" . $_missingMethod . "</danger>" );
+			$return = 1;
 		}
 
 
@@ -107,9 +109,10 @@ class CheckUrlCommand extends Command
 			$output->writeln("Soubory neplnící PSR-4 konvenci: ");
 			foreach ($notPSR as $incompatible) {
 				$output->writeln("<danger>" . $incompatible . "</danger>" );
+				$return = 1;
 			}
 		}
 
-		return 0;
+		return $return;
 	}
 }
